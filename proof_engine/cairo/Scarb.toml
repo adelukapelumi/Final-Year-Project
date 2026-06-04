@@ -1,0 +1,13 @@
+[package]
+name = "referendum_acceptance"
+version = "0.1.0"
+edition = "2024_07"
+
+[cairo]
+enable-gas = false
+
+[dependencies]
+cairo_execute = ">=2.16.1"
+
+[[target.executable]]
+name = "referendum_acceptance"
