@@ -16,4 +16,4 @@ if [ ! -f "$PROOF_FILE" ]; then
 fi
 
 cd "$CAIRO_DIR"
-scarb verify "$PROOF_FILE"
+scarb verify --proof-file "$PROOF_FILE"

@@ -11,4 +11,3 @@ cairo_execute = ">=2.18.0"
 
 [[target.executable]]
 name = "referendum_acceptance"
-source-path = "src/main.cairo"

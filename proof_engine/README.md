@@ -33,7 +33,7 @@ This spike targets the current official Scarb executable/prove/verify flow for C
 1. `scarb execute -p referendum_acceptance --output standard --arguments-file inputs/<case>.json`
 2. `scarb prove --execution-id 1`
 3. Copy `target/execute/referendum_acceptance/execution1/proof/proof.json` to `artifacts/<case>.proof.json`
-4. `scarb verify artifacts/<case>.proof.json`
+4. `scarb verify --proof-file artifacts/<case>.proof.json`
 5. `./scripts/hash_proof.sh artifacts/<case>.proof.json`
 
 ## Current result on this machine
@@ -98,7 +98,7 @@ At line:2 char:1
 ## What the scripts do
 
 - `scripts/prove.sh` runs `scarb execute`, runs `scarb prove`, and copies the real generated `proof.json` into `artifacts/`.
-- `scripts/verify.sh` verifies a proof file with `scarb verify`.
+- `scripts/verify.sh` verifies a proof file with `scarb verify --proof-file`.
 - `scripts/hash_proof.sh` computes the SHA-256 hash of the proof artifact file itself.
 
 ## Expected success signal
@@ -145,6 +145,7 @@ No real local proof artifact was produced on this Windows machine in this sessio
 FILES CREATED:
 proof_engine/README.md
 proof_engine/cairo/Scarb.toml
+proof_engine/cairo/src/lib.cairo
 proof_engine/cairo/src/main.cairo
 proof_engine/cairo/inputs/valid_yes.json
 proof_engine/cairo/inputs/valid_no.json
