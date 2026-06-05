@@ -1,0 +1,94 @@
+name: Proof Spike
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - codex/proof-engine-spike
+    paths:
+      - ".github/workflows/proof-spike.yml"
+      - "proof_engine/**"
+  pull_request:
+    paths:
+      - ".github/workflows/proof-spike.yml"
+      - "proof_engine/**"
+
+permissions:
+  contents: read
+
+jobs:
+  prove-and-verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: proof_engine/cairo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Scarb
+        uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.18.0"
+
+      - name: Show tool versions
+        run: |
+          scarb --version
+          scarb prove --help
+          scarb verify --help
+
+      - name: Prove valid_yes
+        run: sh ./scripts/prove.sh ./inputs/valid_yes.json
+
+      - name: Verify valid_yes proof
+        run: sh ./scripts/verify.sh ./artifacts/valid_yes.proof.json
+
+      - name: Hash valid_yes proof
+        run: sh ./scripts/hash_proof.sh ./artifacts/valid_yes.proof.json | tee ./artifacts/valid_yes.proof.sha256.txt
+
+      - name: Prove valid_no
+        run: sh ./scripts/prove.sh ./inputs/valid_no.json
+
+      - name: Verify valid_no proof
+        run: sh ./scripts/verify.sh ./artifacts/valid_no.proof.json
+
+      - name: Hash valid_no proof
+        run: sh ./scripts/hash_proof.sh ./artifacts/valid_no.proof.json | tee ./artifacts/valid_no.proof.sha256.txt
+
+      - name: Confirm invalid_vote_value fails
+        run: |
+          if sh ./scripts/prove.sh ./inputs/invalid_vote_value.json; then
+            echo "invalid_vote_value unexpectedly produced a proof"
+            exit 1
+          fi
+          echo "invalid_vote_value failed as expected"
+
+      - name: Confirm unregistered fails
+        run: |
+          if sh ./scripts/prove.sh ./inputs/unregistered.json; then
+            echo "unregistered unexpectedly produced a proof"
+            exit 1
+          fi
+          echo "unregistered failed as expected"
+
+      - name: Confirm duplicate_vote fails
+        run: |
+          if sh ./scripts/prove.sh ./inputs/duplicate_vote.json; then
+            echo "duplicate_vote unexpectedly produced a proof"
+            exit 1
+          fi
+          echo "duplicate_vote failed as expected"
+
+      - name: Upload proof artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: proof-spike-artifacts
+          path: |
+            proof_engine/cairo/artifacts/valid_yes.proof.json
+            proof_engine/cairo/artifacts/valid_yes.proof.sha256.txt
+            proof_engine/cairo/artifacts/valid_no.proof.json
+            proof_engine/cairo/artifacts/valid_no.proof.sha256.txt
