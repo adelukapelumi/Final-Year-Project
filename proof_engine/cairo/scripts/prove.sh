@@ -21,7 +21,7 @@ PROOF_DEST="$ARTIFACT_DIR/$CASE_NAME.proof.json"
 
 cd "$CAIRO_DIR"
 scarb clean
-scarb execute -p referendum_acceptance --print-program-output --arguments-file "$INPUT_FILE"
+scarb execute -p referendum_acceptance --target standalone --output standard --print-program-output --arguments-file "$INPUT_FILE"
 scarb prove --execution-id 1
 
 PROOF_SOURCE="$CAIRO_DIR/target/execute/referendum_acceptance/execution1/proof/proof.json"

@@ -30,7 +30,7 @@ The `accepted` value is computed inside the Cairo executable and returned as the
 
 This spike targets the current official Scarb executable/prove/verify flow for Cairo executable packages:
 
-1. `scarb execute -p referendum_acceptance --output standard --arguments-file inputs/<case>.json`
+1. `scarb execute -p referendum_acceptance --target standalone --output standard --print-program-output --arguments-file inputs/<case>.json`
 2. `scarb prove --execution-id 1`
 3. Copy `target/execute/referendum_acceptance/execution1/proof/proof.json` to `artifacts/<case>.proof.json`
 4. `scarb verify --proof-file artifacts/<case>.proof.json`

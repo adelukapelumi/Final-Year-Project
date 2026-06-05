@@ -33,6 +33,8 @@ jobs:
         uses: software-mansion/setup-scarb@v1
         with:
           scarb-version: "2.18.0"
+          cache: false
+          cache-targets: false
 
       - name: Show tool versions
         run: |
