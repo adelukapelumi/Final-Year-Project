@@ -32,7 +32,7 @@ jobs:
       - name: Install Scarb
         uses: software-mansion/setup-scarb@v1
         with:
-          scarb-version: "2.18.0"
+          scarb-version: "2.19.0-rc.0"
           cache: false
           cache-targets: false
 

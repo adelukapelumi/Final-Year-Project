@@ -7,7 +7,7 @@ edition = "2024_07"
 enable-gas = false
 
 [dependencies]
-cairo_execute = ">=2.18.0"
+cairo_execute = "2.19.0-rc.0"
 
 [[target.executable]]
 name = "referendum_acceptance"
