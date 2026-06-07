@@ -10,9 +10,9 @@ use winterfell::math::{fields::f128::BaseElement, FieldElement, ToElements};
 use winterfell::{
     verify, AcceptableOptions, Air, AirContext, Assertion, AuxRandElements, BatchingMethod,
     CompositionPoly, CompositionPolyTrace, ConstraintCompositionCoefficients,
-    DefaultConstraintCommitment, DefaultConstraintEvaluator, DefaultTraceLde,
-    Deserializable, EvaluationFrame, FieldExtension, PartitionOptions, Proof, ProofOptions,
-    Prover, Serializable, StarkDomain, TraceInfo, TracePolyTable, TraceTable,
+    DefaultConstraintCommitment, DefaultConstraintEvaluator, DefaultTraceLde, EvaluationFrame,
+    FieldExtension, PartitionOptions, Proof, ProofOptions, Prover, StarkDomain, TraceInfo,
+    TracePolyTable, TraceTable,
     TransitionConstraintDegree,
 };
 
@@ -227,7 +227,7 @@ fn run() -> Result<(), String> {
     }
 }
 
-fn prove(input: ReferendumInput, public_inputs: PublicInputs, proof_path: &Path) -> Result<(), String> {
+fn prove(input: ReferendumInput, _public_inputs: PublicInputs, proof_path: &Path) -> Result<(), String> {
     let trace = build_trace(input)?;
     let prover = ReferendumProver::new(default_proof_options());
 
