@@ -12,11 +12,10 @@ use winterfell::{
     CompositionPoly, CompositionPolyTrace, ConstraintCompositionCoefficients,
     DefaultConstraintCommitment, DefaultConstraintEvaluator, DefaultTraceLde,
     Deserializable, EvaluationFrame, FieldExtension, PartitionOptions, Proof, ProofOptions,
-    Prover, Serializable, StarkDomain, Trace, TraceInfo, TracePolyTable, TraceTable,
+    Prover, Serializable, StarkDomain, TraceInfo, TracePolyTable, TraceTable,
     TransitionConstraintDegree,
 };
 
-const TRACE_WIDTH: usize = 4;
 const TRACE_LENGTH: usize = 8;
 const ACCEPTED_VALUE: u64 = 1;
 
@@ -64,6 +63,7 @@ impl Air for ReferendumAir {
     type PublicInputs = PublicInputs;
 
     fn new(trace_info: TraceInfo, public_inputs: PublicInputs, options: ProofOptions) -> Self {
+        assert_eq!(4, trace_info.width());
         let degrees = vec![
             TransitionConstraintDegree::new(1),
             TransitionConstraintDegree::new(1),
@@ -76,9 +76,10 @@ impl Air for ReferendumAir {
             TransitionConstraintDegree::new(1),
         ];
         let trace_length = trace_info.length();
+        let num_assertions = 8;
 
         Self {
-            context: AirContext::new(trace_info, degrees, options),
+            context: AirContext::new(trace_info, degrees, num_assertions, options),
             public_inputs,
             trace_length,
         }
@@ -88,7 +89,7 @@ impl Air for ReferendumAir {
         &self.context
     }
 
-    fn evaluate_transition<E: FieldElement<BaseField = Self::BaseField>>(
+    fn evaluate_transition<E: FieldElement<BaseField = Self::BaseField> + From<Self::BaseField>>(
         &self,
         frame: &EvaluationFrame<E>,
         _periodic_values: &[E],
@@ -163,7 +164,7 @@ impl Prover for ReferendumProver {
     fn new_trace_lde<E: FieldElement<BaseField = Self::BaseField>>(
         &self,
         trace_info: &TraceInfo,
-        main_trace: &ColMatrix<E>,
+        main_trace: &ColMatrix<Self::BaseField>,
         domain: &StarkDomain<Self::BaseField>,
         partition_options: PartitionOptions,
     ) -> (Self::TraceLde<E>, TracePolyTable<E>) {
@@ -240,7 +241,7 @@ fn prove(input: ReferendumInput, public_inputs: PublicInputs, proof_path: &Path)
     }
     fs::write(proof_path, &proof_bytes).map_err(|error| error.to_string())?;
 
-    println!("accepted={}", public_inputs.accepted.as_int());
+    println!("accepted={}", ACCEPTED_VALUE);
     println!("proof_path={}", proof_path.display());
     println!("proof_size_bytes={}", proof_bytes.len());
     println!("proof_generation_ms={}", elapsed.as_millis());
@@ -307,20 +308,20 @@ fn compute_accepted(input: ReferendumInput) -> Result<u64, String> {
 
 fn build_public_inputs(input: ReferendumInput, accepted: u64) -> PublicInputs {
     PublicInputs {
-        vote_value: BaseElement::new(input.vote_value),
-        registered_flag: BaseElement::new(input.registered_flag),
-        already_voted_flag: BaseElement::new(input.already_voted_flag),
-        accepted: BaseElement::new(accepted),
+        vote_value: BaseElement::new(input.vote_value.into()),
+        registered_flag: BaseElement::new(input.registered_flag.into()),
+        already_voted_flag: BaseElement::new(input.already_voted_flag.into()),
+        accepted: BaseElement::new(accepted.into()),
     }
 }
 
 fn build_trace(input: ReferendumInput) -> Result<TraceTable<BaseElement>, String> {
     let accepted = compute_accepted(input)?;
     let trace = TraceTable::init(vec![
-        vec![BaseElement::new(input.vote_value); TRACE_LENGTH],
-        vec![BaseElement::new(input.registered_flag); TRACE_LENGTH],
-        vec![BaseElement::new(input.already_voted_flag); TRACE_LENGTH],
-        vec![BaseElement::new(accepted); TRACE_LENGTH],
+        vec![BaseElement::new(input.vote_value.into()); TRACE_LENGTH],
+        vec![BaseElement::new(input.registered_flag.into()); TRACE_LENGTH],
+        vec![BaseElement::new(input.already_voted_flag.into()); TRACE_LENGTH],
+        vec![BaseElement::new(accepted.into()); TRACE_LENGTH],
     ]);
 
     Ok(trace)
