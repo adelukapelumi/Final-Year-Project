@@ -18,6 +18,7 @@ use winterfell::{
 
 const TRACE_LENGTH: usize = 8;
 const ACCEPTED_VALUE: u64 = 1;
+const CLOCK_START: u64 = 0;
 
 type HashFn = Blake3_256<BaseElement>;
 type VC = MerkleTree<HashFn>;
@@ -63,8 +64,9 @@ impl Air for ReferendumAir {
     type PublicInputs = PublicInputs;
 
     fn new(trace_info: TraceInfo, public_inputs: PublicInputs, options: ProofOptions) -> Self {
-        assert_eq!(4, trace_info.width());
+        assert_eq!(5, trace_info.width());
         let degrees = vec![
+            TransitionConstraintDegree::new(1),
             TransitionConstraintDegree::new(1),
             TransitionConstraintDegree::new(1),
             TransitionConstraintDegree::new(1),
@@ -76,7 +78,7 @@ impl Air for ReferendumAir {
             TransitionConstraintDegree::new(1),
         ];
         let trace_length = trace_info.length();
-        let num_assertions = 8;
+        let num_assertions = 10;
 
         Self {
             context: AirContext::new(trace_info, degrees, num_assertions, options),
@@ -99,28 +101,31 @@ impl Air for ReferendumAir {
         let next = frame.next();
         let one = E::ONE;
 
-        result[0] = next[0] - current[0];
+        result[0] = next[0] - current[0] - one;
         result[1] = next[1] - current[1];
         result[2] = next[2] - current[2];
         result[3] = next[3] - current[3];
-        result[4] = current[0] * (current[0] - one);
-        result[5] = current[1] - one;
-        result[6] = current[2];
-        result[7] = current[3] - (current[1] * (one - current[2]));
-        result[8] = current[3] - one;
+        result[4] = next[4] - current[4];
+        result[5] = current[1] * (current[1] - one);
+        result[6] = current[2] - one;
+        result[7] = current[3];
+        result[8] = current[4] - (current[2] * (one - current[3]));
+        result[9] = current[4] - one;
     }
 
     fn get_assertions(&self) -> Vec<Assertion<Self::BaseField>> {
         let last_step = self.trace_length - 1;
         vec![
-            Assertion::single(0, 0, self.public_inputs.vote_value),
-            Assertion::single(1, 0, self.public_inputs.registered_flag),
-            Assertion::single(2, 0, self.public_inputs.already_voted_flag),
-            Assertion::single(3, 0, self.public_inputs.accepted),
-            Assertion::single(0, last_step, self.public_inputs.vote_value),
-            Assertion::single(1, last_step, self.public_inputs.registered_flag),
-            Assertion::single(2, last_step, self.public_inputs.already_voted_flag),
-            Assertion::single(3, last_step, self.public_inputs.accepted),
+            Assertion::single(0, 0, BaseElement::new(CLOCK_START.into())),
+            Assertion::single(0, last_step, BaseElement::new((last_step as u64).into())),
+            Assertion::single(1, 0, self.public_inputs.vote_value),
+            Assertion::single(2, 0, self.public_inputs.registered_flag),
+            Assertion::single(3, 0, self.public_inputs.already_voted_flag),
+            Assertion::single(4, 0, self.public_inputs.accepted),
+            Assertion::single(1, last_step, self.public_inputs.vote_value),
+            Assertion::single(2, last_step, self.public_inputs.registered_flag),
+            Assertion::single(3, last_step, self.public_inputs.already_voted_flag),
+            Assertion::single(4, last_step, self.public_inputs.accepted),
         ]
     }
 }
@@ -150,10 +155,10 @@ impl Prover for ReferendumProver {
 
     fn get_pub_inputs(&self, trace: &Self::Trace) -> PublicInputs {
         PublicInputs {
-            vote_value: trace.get(0, 0),
-            registered_flag: trace.get(1, 0),
-            already_voted_flag: trace.get(2, 0),
-            accepted: trace.get(3, 0),
+            vote_value: trace.get(1, 0),
+            registered_flag: trace.get(2, 0),
+            already_voted_flag: trace.get(3, 0),
+            accepted: trace.get(4, 0),
         }
     }
 
@@ -317,7 +322,13 @@ fn build_public_inputs(input: ReferendumInput, accepted: u64) -> PublicInputs {
 
 fn build_trace(input: ReferendumInput) -> Result<TraceTable<BaseElement>, String> {
     let accepted = compute_accepted(input)?;
+    let mut clock_column = Vec::with_capacity(TRACE_LENGTH);
+    for step in 0..TRACE_LENGTH {
+        clock_column.push(BaseElement::new((step as u64).into()));
+    }
+
     let trace = TraceTable::init(vec![
+        clock_column,
         vec![BaseElement::new(input.vote_value.into()); TRACE_LENGTH],
         vec![BaseElement::new(input.registered_flag.into()); TRACE_LENGTH],
         vec![BaseElement::new(input.already_voted_flag.into()); TRACE_LENGTH],
