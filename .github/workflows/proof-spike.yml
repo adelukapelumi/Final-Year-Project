@@ -1,0 +1,94 @@
+name: Proof Spike
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - codex/proof-engine-spike
+    paths:
+      - ".github/workflows/proof-spike.yml"
+      - "proof_engine/**"
+  pull_request:
+    paths:
+      - ".github/workflows/proof-spike.yml"
+      - "proof_engine/**"
+
+permissions:
+  contents: read
+
+jobs:
+  prove-and-verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: proof_engine/winterfell
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Show tool versions
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Prove valid_yes
+        run: cargo run --release -- prove ./inputs/valid_yes.json ./artifacts/valid_yes.proof.bin
+
+      - name: Verify valid_yes proof
+        run: cargo run --release -- verify ./inputs/valid_yes.json ./artifacts/valid_yes.proof.bin
+
+      - name: Hash valid_yes proof
+        run: sha256sum ./artifacts/valid_yes.proof.bin | tee ./artifacts/valid_yes.proof.sha256.txt
+
+      - name: Prove valid_no
+        run: cargo run --release -- prove ./inputs/valid_no.json ./artifacts/valid_no.proof.bin
+
+      - name: Verify valid_no proof
+        run: cargo run --release -- verify ./inputs/valid_no.json ./artifacts/valid_no.proof.bin
+
+      - name: Hash valid_no proof
+        run: sha256sum ./artifacts/valid_no.proof.bin | tee ./artifacts/valid_no.proof.sha256.txt
+
+      - name: Reject invalid_vote_value before proof generation
+        run: |
+          rm -f ./artifacts/invalid_vote_value.proof.bin
+          if cargo run --release -- prove ./inputs/invalid_vote_value.json ./artifacts/invalid_vote_value.proof.bin; then
+            echo "invalid_vote_value unexpectedly succeeded"
+            exit 1
+          fi
+          test ! -f ./artifacts/invalid_vote_value.proof.bin
+
+      - name: Reject unregistered before proof generation
+        run: |
+          rm -f ./artifacts/unregistered.proof.bin
+          if cargo run --release -- prove ./inputs/unregistered.json ./artifacts/unregistered.proof.bin; then
+            echo "unregistered unexpectedly succeeded"
+            exit 1
+          fi
+          test ! -f ./artifacts/unregistered.proof.bin
+
+      - name: Reject duplicate_vote before proof generation
+        run: |
+          rm -f ./artifacts/duplicate_vote.proof.bin
+          if cargo run --release -- prove ./inputs/duplicate_vote.json ./artifacts/duplicate_vote.proof.bin; then
+            echo "duplicate_vote unexpectedly succeeded"
+            exit 1
+          fi
+          test ! -f ./artifacts/duplicate_vote.proof.bin
+
+      - name: Upload proof artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: proof-spike-artifacts
+          path: |
+            proof_engine/winterfell/artifacts/valid_yes.proof.bin
+            proof_engine/winterfell/artifacts/valid_yes.proof.sha256.txt
+            proof_engine/winterfell/artifacts/valid_no.proof.bin
+            proof_engine/winterfell/artifacts/valid_no.proof.sha256.txt
