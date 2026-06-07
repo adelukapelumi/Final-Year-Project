@@ -23,33 +23,28 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: proof_engine/cairo
+        working-directory: proof_engine/winterfell
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Scarb
-        uses: software-mansion/setup-scarb@v1
-        with:
-          scarb-version: "2.19.0-rc.0"
-          cache: false
-          cache-targets: false
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Show tool versions
         run: |
-          scarb --version
-          scarb prove --help
-          scarb verify --help
+          rustc --version
+          cargo --version
 
       - name: Prove valid_yes
-        run: sh ./scripts/prove.sh ./inputs/valid_yes.json
+        run: cargo run --release -- prove ./inputs/valid_yes.json ./artifacts/valid_yes.proof.bin
 
       - name: Verify valid_yes proof
-        run: sh ./scripts/verify.sh ./artifacts/valid_yes.proof.json
+        run: cargo run --release -- verify ./inputs/valid_yes.json ./artifacts/valid_yes.proof.bin
 
       - name: Hash valid_yes proof
-        run: sh ./scripts/hash_proof.sh ./artifacts/valid_yes.proof.json | tee ./artifacts/valid_yes.proof.sha256.txt
+        run: sha256sum ./artifacts/valid_yes.proof.bin | tee ./artifacts/valid_yes.proof.sha256.txt
 
       - name: Upload proof artifacts
         uses: actions/upload-artifact@v4
@@ -57,5 +52,5 @@ jobs:
         with:
           name: proof-spike-artifacts
           path: |
-            proof_engine/cairo/artifacts/valid_yes.proof.json
-            proof_engine/cairo/artifacts/valid_yes.proof.sha256.txt
+            proof_engine/winterfell/artifacts/valid_yes.proof.bin
+            proof_engine/winterfell/artifacts/valid_yes.proof.sha256.txt
