@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS voters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nin_hash TEXT NOT NULL UNIQUE,
+    session_token_hash TEXT NOT NULL,
+    token_expires_at TEXT NOT NULL,
+    has_voted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    CHECK (has_voted IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS ballots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ballot_id TEXT NOT NULL UNIQUE,
+    voter_id INTEGER NOT NULL UNIQUE,
+    encrypted_vote TEXT NOT NULL,
+    proof_hash TEXT NOT NULL,
+    proof_path TEXT NOT NULL,
+    public_inputs TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (voter_id) REFERENCES voters(id) ON DELETE CASCADE
+);
