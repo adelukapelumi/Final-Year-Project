@@ -24,6 +24,15 @@ pnpm dev
 
 The Vite frontend expects the backend at `http://127.0.0.1:5000` and proxies the existing Flask endpoints there during local development.
 
+## Public Verification
+
+The prototype supports server-mediated public verification through `POST /verify`.
+
+- Submit `{ "ballot_id": "<ballot id>" }` to `/verify`.
+- The backend looks up the selected ballot receipt and re-runs the Winterfell verifier for that proof artifact.
+- The public board remains privacy-preserving and only publishes `ballot_id`, `proof_hash`, and `timestamp`.
+- The verification response is intended for receipt checking only and does not expose NIN, NIN hash, vote choice, decrypted vote, or session token.
+
 ### Rust/Cargo Requirement
 
 Rust and Cargo are required locally because `POST /vote` calls the Winterfell proof engine through the Flask backend.
