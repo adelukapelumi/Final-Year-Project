@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Ballot from "./pages/Ballot";
+import BiometricVerification from "./pages/BiometricVerification";
 import Eligibility from "./pages/Eligibility";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -49,7 +50,11 @@ export default function App() {
   }, [receipt]);
 
   function handleAuthenticated(nextSession) {
-    setSession({ ...nextSession, eligibilityConfirmed: false });
+    setSession({
+      ...nextSession,
+      eligibilityConfirmed: false,
+      biometricVerified: false
+    });
     navigate("/eligibility");
   }
 
@@ -57,6 +62,14 @@ export default function App() {
     setSession((currentSession) => ({
       ...currentSession,
       eligibilityConfirmed: true
+    }));
+    navigate("/biometric-verify");
+  }
+
+  function handleBiometricVerified() {
+    setSession((currentSession) => ({
+      ...currentSession,
+      biometricVerified: true
     }));
     navigate("/ballot");
   }
@@ -95,7 +108,19 @@ export default function App() {
           path="/eligibility"
           element={
             isAuthenticated ? (
-              <Eligibility onConfirmed={handleEligibilityConfirmed} />
+              <Eligibility session={session} onConfirmed={handleEligibilityConfirmed} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/biometric-verify"
+          element={
+            isAuthenticated && session?.eligibilityConfirmed ? (
+              <BiometricVerification session={session} onVerified={handleBiometricVerified} />
+            ) : isAuthenticated ? (
+              <Navigate to="/eligibility" replace />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -104,10 +129,10 @@ export default function App() {
         <Route
           path="/ballot"
           element={
-            isAuthenticated && session?.eligibilityConfirmed ? (
+            isAuthenticated && session?.eligibilityConfirmed && session?.biometricVerified ? (
               <Ballot session={session} onReceiptReady={handleReceipt} />
             ) : isAuthenticated ? (
-              <Navigate to="/eligibility" replace />
+              <Navigate to={session?.eligibilityConfirmed ? "/biometric-verify" : "/eligibility"} replace />
             ) : (
               <Navigate to="/login" replace />
             )

@@ -1,8 +1,64 @@
 {
-  "registered_nins": [
-    "12345678901",
-    "23456789012",
-    "34567890123",
-    "45678901234"
+  "registered_voters": [
+    {
+      "nin": "12345678901",
+      "biometric": {
+        "face_template_id": "tmpl-001",
+        "accepted_probe_id": "diaspora-face-match",
+        "available_probe_ids": [
+          "diaspora-face-match",
+          "diaspora-face-alt",
+          "diaspora-face-retry"
+        ],
+        "development_profile_label": "Diaspora desk sample A",
+        "verification_mode": "BVAS-inspired prototype verification",
+        "fallback_message": "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems."
+      }
+    },
+    {
+      "nin": "23456789012",
+      "biometric": {
+        "face_template_id": "tmpl-002",
+        "accepted_probe_id": "diaspora-face-match",
+        "available_probe_ids": [
+          "diaspora-face-match",
+          "diaspora-face-alt",
+          "diaspora-face-retry"
+        ],
+        "development_profile_label": "Diaspora desk sample B",
+        "verification_mode": "BVAS-inspired prototype verification",
+        "fallback_message": "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems."
+      }
+    },
+    {
+      "nin": "34567890123",
+      "biometric": {
+        "face_template_id": "tmpl-003",
+        "accepted_probe_id": "diaspora-face-match",
+        "available_probe_ids": [
+          "diaspora-face-match",
+          "diaspora-face-alt",
+          "diaspora-face-retry"
+        ],
+        "development_profile_label": "Diaspora desk sample C",
+        "verification_mode": "BVAS-inspired prototype verification",
+        "fallback_message": "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems."
+      }
+    },
+    {
+      "nin": "45678901234",
+      "biometric": {
+        "face_template_id": "tmpl-004",
+        "accepted_probe_id": "diaspora-face-match",
+        "available_probe_ids": [
+          "diaspora-face-match",
+          "diaspora-face-alt",
+          "diaspora-face-retry"
+        ],
+        "development_profile_label": "Diaspora desk sample D",
+        "verification_mode": "BVAS-inspired prototype verification",
+        "fallback_message": "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems."
+      }
+    }
   ]
 }

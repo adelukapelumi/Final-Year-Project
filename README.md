@@ -1,5 +1,7 @@
 # Diaspora E-voting Prototype
 
+This prototype uses mock NIN accreditation and mock facial verification only. It does not connect to live INEC, NIMC, BVAS, presidential-election, candidate, party, or blockchain systems.
+
 ## Local Run
 
 ### Backend
@@ -23,6 +25,22 @@ pnpm dev
 ```
 
 The Vite frontend expects the backend at `http://127.0.0.1:5000` and proxies the existing Flask endpoints there during local development.
+
+## Accreditation Flow
+
+The current accreditation flow is intentionally development-only:
+
+- mock NIN verification checks the submitted 11-digit NIN against `backend/data/mock_nin_registry.json`
+- BVAS-inspired prototype verification runs a mock facial-verification step using preloaded development face-sample IDs
+- ballot access is granted only after the mock NIN is eligible, the voter has not already voted, and the mock facial verification passes
+
+Fallback notice shown in the UI:
+
+`This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems.`
+
+## Production Note
+
+Production deployment would require authorized and compliant integration with INEC/NIMC systems and an approved biometric-verification stack. Those integrations are not part of this repository.
 
 ### Rust/Cargo Requirement
 

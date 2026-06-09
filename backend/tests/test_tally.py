@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_support import create_test_app, register, vote
+from test_support import accredit, create_test_app, vote
 
 
 class TallyTests(unittest.TestCase):
@@ -17,8 +17,8 @@ class TallyTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_tally_counts_yes_and_no_correctly(self):
-        first = register(self.client, "12345678901")
-        second = register(self.client, "23456789012")
+        first = accredit(self.client, "12345678901")
+        second = accredit(self.client, "23456789012")
 
         vote(self.client, first.get_json()["token"], "yes")
         vote(self.client, second.get_json()["token"], "no")
@@ -40,9 +40,9 @@ class TallyTests(unittest.TestCase):
         )
 
     def test_tally_marks_election_completed_when_all_registered_voters_have_voted(self):
-        first = register(self.client, "12345678901")
-        second = register(self.client, "23456789012")
-        third = register(self.client, "34567890123")
+        first = accredit(self.client, "12345678901")
+        second = accredit(self.client, "23456789012")
+        third = accredit(self.client, "34567890123")
 
         vote(self.client, first.get_json()["token"], "yes")
         vote(self.client, second.get_json()["token"], "no")

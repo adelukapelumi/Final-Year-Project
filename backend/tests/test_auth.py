@@ -23,6 +23,11 @@ class AuthTests(unittest.TestCase):
         body = response.get_json()
         self.assertTrue(body["token"])
         self.assertEqual(len(body["nin_hash"]), 64)
+        self.assertEqual(body["biometric"]["verification_mode"], "BVAS-inspired prototype verification")
+        self.assertEqual(
+            body["fallback_message"],
+            "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems.",
+        )
 
     def test_invalid_nin_is_rejected(self):
         response = self.client.post("/register", json={"nin": "99999999999"})

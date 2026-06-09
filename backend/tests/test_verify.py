@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_support import create_test_app, register, vote
+from test_support import accredit, create_test_app, vote
 
 
 class VerifyTests(unittest.TestCase):
@@ -17,7 +17,7 @@ class VerifyTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_verify_replays_public_proof_for_selected_ballot(self):
-        auth = register(self.client)
+        auth = accredit(self.client)
         token = auth.get_json()["token"]
         vote_response = vote(self.client, token, "yes")
         ballot = vote_response.get_json()
