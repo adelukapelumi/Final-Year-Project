@@ -1,0 +1,51 @@
+from __future__ import annotations
+
+import tempfile
+import unittest
+from pathlib import Path
+
+from test_support import biometric_verify, create_test_app, register, vote
+
+
+class BiometricVerificationTests(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.app = create_test_app(Path(self.temp_dir.name))
+        self.client = self.app.test_client()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_biometric_verification_succeeds_with_mock_probe(self):
+        auth = register(self.client)
+        token = auth.get_json()["token"]
+
+        response = biometric_verify(self.client, token, "diaspora-face-match")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["verified"])
+
+    def test_biometric_verification_rejects_non_matching_probe(self):
+        auth = register(self.client)
+        token = auth.get_json()["token"]
+
+        response = biometric_verify(self.client, token, "diaspora-face-alt")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.get_json()["verified"])
+        self.assertEqual(response.get_json()["error"], "mock facial verification failed")
+
+    def test_biometric_verification_cannot_run_after_vote_is_cast(self):
+        auth = register(self.client)
+        token = auth.get_json()["token"]
+        biometric_verify(self.client, token, "diaspora-face-match")
+        vote(self.client, token, "yes")
+
+        response = biometric_verify(self.client, token, "diaspora-face-match")
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.get_json()["error"], "voter has already cast a ballot")
+
+
+if __name__ == "__main__":
+    unittest.main()

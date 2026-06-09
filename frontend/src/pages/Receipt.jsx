@@ -48,7 +48,7 @@ export default function Receipt({ receipt }) {
     <section className="page narrow-page">
       <div className="receipt-success">
         <span className="receipt-success__icon"><Icon name="check" size={34} /></span>
-        <span className="section-kicker">Step 5 of 5 · Submission complete</span>
+        <span className="section-kicker">Step 6 of 6 · Submission complete</span>
         <h1>Your vote has been securely recorded.</h1>
         <p>Keep this receipt to locate and verify your ballot proof on the public board.</p>
       </div>

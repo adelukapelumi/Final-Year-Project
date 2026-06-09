@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_support import create_test_app, register, vote
+from test_support import accredit, create_test_app, vote
 
 
 class BoardTests(unittest.TestCase):
@@ -17,7 +17,7 @@ class BoardTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_board_hides_sensitive_fields(self):
-        auth = register(self.client)
+        auth = accredit(self.client)
         token = auth.get_json()["token"]
         vote_response = vote(self.client, token, "yes")
         ballot_id = vote_response.get_json()["ballot_id"]
@@ -34,6 +34,8 @@ class BoardTests(unittest.TestCase):
         self.assertNotIn("token", board_ballot)
         self.assertNotIn("vote", board_ballot)
         self.assertNotIn("encrypted_vote", board_ballot)
+        self.assertNotIn("biometric_verified", board_ballot)
+        self.assertNotIn("face_template_id", board_ballot)
 
 
 if __name__ == "__main__":

@@ -26,4 +26,9 @@ def init_db() -> None:
     db = get_db()
     schema_path = Path(current_app.config["SCHEMA_PATH"])
     db.executescript(schema_path.read_text(encoding="utf-8"))
+    columns = {row["name"] for row in db.execute("PRAGMA table_info(voters)").fetchall()}
+    if "biometric_verified" not in columns:
+        db.execute("ALTER TABLE voters ADD COLUMN biometric_verified INTEGER NOT NULL DEFAULT 0")
+    if "biometric_verified_at" not in columns:
+        db.execute("ALTER TABLE voters ADD COLUMN biometric_verified_at TEXT")
     db.commit()

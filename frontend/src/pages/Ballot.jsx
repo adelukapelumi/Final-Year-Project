@@ -108,7 +108,7 @@ export default function Ballot({ session, onReceiptReady }) {
       <section className="page narrow-page">
         <div className="step-heading">
           <div>
-            <span className="section-kicker">Step 4 of 5</span>
+            <span className="section-kicker">Step 5 of 6</span>
             <h1>Review & Confirm Vote</h1>
             <p>Check your selection carefully. A submitted ballot cannot be changed.</p>
           </div>
@@ -161,7 +161,7 @@ export default function Ballot({ session, onReceiptReady }) {
     <section className="page narrow-page">
       <div className="step-heading">
         <div>
-          <span className="section-kicker">Step 3 of 5</span>
+          <span className="section-kicker">Step 4 of 6</span>
           <h1>Referendum Ballot</h1>
           <p>Select one response. Your ballot will not be submitted until you review and confirm it.</p>
         </div>

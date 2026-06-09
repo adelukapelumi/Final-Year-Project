@@ -827,13 +827,15 @@ strong {
   box-shadow: 0 0 0 4px rgba(30, 99, 213, 0.08);
 }
 
-.input-wrap input {
+.input-wrap input,
+.input-wrap select {
   width: 100%;
   border: 0;
   outline: 0;
   color: var(--text);
   background: transparent;
   font-size: 0.83rem;
+  appearance: none;
 }
 
 .input-wrap input::placeholder {

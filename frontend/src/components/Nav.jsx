@@ -17,7 +17,8 @@ export default function Nav({ currentPath, isAuthenticated, onLogout }) {
       {items.map((item) => {
         const active =
           currentPath === item.to ||
-          (item.to === "/ballot" && currentPath === "/eligibility");
+          (item.to === "/ballot" &&
+            (currentPath === "/eligibility" || currentPath === "/biometric-verify"));
         return (
           <NavLink className={active ? "is-active" : ""} key={item.to} to={item.to}>
             <Icon name={item.icon} size={19} />

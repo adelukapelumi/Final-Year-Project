@@ -10,6 +10,7 @@ from auth import authenticate_token, register_or_login, resolve_token_from_reque
 from config import Config
 from crypto_utils import encrypt_vote
 from db import close_db, get_db, init_db
+from nin_registry import MockNINRegistry, PROTOTYPE_FALLBACK_MESSAGE
 from proof_client import ProofClientError, generate_and_verify_proof, verify_existing_proof
 from tally_service import compute_tally, fetch_ballot_for_verification, public_board
 
@@ -38,8 +39,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     Path(app.config["PROOF_INPUTS_DIR"]).mkdir(parents=True, exist_ok=True)
 
     app.teardown_appcontext(close_db)
-    if not db_path.exists():
-        with app.app_context():
+    with app.app_context():
+        if not db_path.exists():
+            init_db()
+        else:
             init_db()
 
     @app.post("/register")
@@ -52,7 +55,72 @@ def create_app(test_config: dict | None = None) -> Flask:
             return jsonify({"error": str(exc)}), 400
         except PermissionError as exc:
             return jsonify({"error": str(exc)}), 403
-        return jsonify({"token": result["token"], "nin_hash": result["nin_hash"]}), 200
+        return (
+            jsonify(
+                {
+                    "token": result["token"],
+                    "nin_hash": result["nin_hash"],
+                    "biometric": result["biometric"],
+                    "fallback_message": PROTOTYPE_FALLBACK_MESSAGE,
+                }
+            ),
+            200,
+        )
+
+    @app.post("/biometric-verify")
+    def biometric_verify():
+        payload = request.get_json(silent=True) or {}
+        try:
+            token = resolve_token_from_request(request)
+            voter = authenticate_token(token)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        except PermissionError as exc:
+            return jsonify({"error": str(exc)}), 403
+
+        if voter["has_voted"]:
+            return jsonify({"error": "voter has already cast a ballot"}), 409
+
+        probe_id = str(payload.get("probe_id") or "").strip()
+        if not probe_id:
+            return jsonify({"error": "probe_id is required"}), 400
+
+        registry = MockNINRegistry(app.config["NIN_REGISTRY_PATH"])
+        result = registry.verify_face_probe(voter["nin_hash"], probe_id)
+        if not result["verified"]:
+            return (
+                jsonify(
+                    {
+                        "error": "mock facial verification failed",
+                        "verified": False,
+                        "fallback_message": result["fallback_message"],
+                    }
+                ),
+                403,
+            )
+
+        db = get_db()
+        db.execute(
+            """
+            UPDATE voters
+            SET biometric_verified = 1, biometric_verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (voter["id"],),
+        )
+        db.commit()
+
+        return (
+            jsonify(
+                {
+                    "verified": True,
+                    "verification_mode": result["verification_mode"],
+                    "development_profile_label": result["development_profile_label"],
+                    "fallback_message": result["fallback_message"],
+                }
+            ),
+            200,
+        )
 
     @app.post("/vote")
     def vote():
@@ -65,6 +133,9 @@ def create_app(test_config: dict | None = None) -> Flask:
             return jsonify({"error": str(exc)}), 400
         except PermissionError as exc:
             return jsonify({"error": str(exc)}), 403
+
+        if not voter["biometric_verified"]:
+            return jsonify({"error": "biometric verification required before ballot access"}), 403
 
         db = get_db()
         prior_vote = db.execute("SELECT ballot_id FROM ballots WHERE voter_id = ?", (voter["id"],)).fetchone()

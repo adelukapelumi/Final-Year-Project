@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_support import create_test_app, register, vote
+from test_support import accredit, create_test_app, register, vote
 
 
 class VoteTests(unittest.TestCase):
@@ -17,7 +17,7 @@ class VoteTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_valid_vote_generates_proof_and_persists_ballot(self):
-        auth = register(self.client)
+        auth = accredit(self.client)
         token = auth.get_json()["token"]
 
         response = vote(self.client, token, "yes")
@@ -37,7 +37,7 @@ class VoteTests(unittest.TestCase):
         )
 
     def test_duplicate_vote_rejected(self):
-        auth = register(self.client)
+        auth = accredit(self.client)
         token = auth.get_json()["token"]
 
         first = vote(self.client, token, "no")
@@ -46,6 +46,15 @@ class VoteTests(unittest.TestCase):
         self.assertEqual(first.status_code, 201)
         self.assertEqual(second.status_code, 409)
         self.assertEqual(second.get_json()["error"], "duplicate vote rejected")
+
+    def test_vote_requires_biometric_verification_before_ballot_access(self):
+        auth = register(self.client)
+        token = auth.get_json()["token"]
+
+        response = vote(self.client, token, "yes")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.get_json()["error"], "biometric verification required before ballot access")
 
 
 if __name__ == "__main__":

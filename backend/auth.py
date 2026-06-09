@@ -46,8 +46,16 @@ def register_or_login(nin: str) -> dict:
     if voter is None:
         cursor = db.execute(
             """
-            INSERT INTO voters (nin_hash, session_token_hash, token_expires_at, created_at, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO voters (
+                nin_hash,
+                session_token_hash,
+                token_expires_at,
+                biometric_verified,
+                biometric_verified_at,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, 0, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """,
             (nin_hash, token_hash, expires_at),
         )
@@ -57,14 +65,24 @@ def register_or_login(nin: str) -> dict:
         db.execute(
             """
             UPDATE voters
-            SET session_token_hash = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+            SET
+                session_token_hash = ?,
+                token_expires_at = ?,
+                biometric_verified = 0,
+                biometric_verified_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
             (token_hash, expires_at, voter_id),
         )
     db.commit()
 
-    return {"token": token, "voter_id": voter_id, "nin_hash": nin_hash}
+    return {
+        "token": token,
+        "voter_id": voter_id,
+        "nin_hash": nin_hash,
+        "biometric": registry.biometric_prompt(nin_hash),
+    }
 
 
 def authenticate_token(token: str) -> sqlite3.Row:
@@ -72,7 +90,7 @@ def authenticate_token(token: str) -> sqlite3.Row:
     token_hash = hash_token(token)
     voter = db.execute(
         """
-        SELECT id, nin_hash, session_token_hash, token_expires_at
+        SELECT id, nin_hash, session_token_hash, token_expires_at, has_voted, biometric_verified, biometric_verified_at
         FROM voters
         WHERE session_token_hash = ?
         """,

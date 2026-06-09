@@ -15,7 +15,15 @@ export default function Login({ session, onAuthenticated }) {
       const result = await authenticate(nin, "login");
       onAuthenticated({
         token: result.token,
-        ninHash: result.nin_hash
+        ninHash: result.nin_hash,
+        biometric: {
+          verificationMode: result.biometric?.verification_mode,
+          developmentProfileLabel: result.biometric?.development_profile_label,
+          recommendedProbeId: result.biometric?.recommended_probe_id,
+          availableProbes: result.biometric?.available_probes || [],
+          fallbackMessage: result.biometric?.fallback_message,
+        },
+        fallbackMessage: result.fallback_message
       });
     } catch (requestError) {
       setError(requestError.message || "Accreditation failed.");
@@ -59,7 +67,7 @@ export default function Login({ session, onAuthenticated }) {
 
       <div className="auth-panel auth-panel--form">
         <div className="auth-form">
-          <span className="section-kicker">Step 1 of 5</span>
+          <span className="section-kicker">Step 1 of 6</span>
           <h2>Voter Accreditation</h2>
           <p className="muted">
             Enter your prototype National Identification Number to begin.
@@ -85,6 +93,16 @@ export default function Login({ session, onAuthenticated }) {
               />
             </div>
             <small>Prototype credential only. Use a configured development NIN.</small>
+          </div>
+
+          <div className="privacy-note">
+            <Icon name="shield" size={22} />
+            <div>
+              <strong>BVAS-inspired prototype flow</strong>
+              <span>
+                This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems.
+              </span>
+            </div>
           </div>
 
           {error ? (

@@ -57,6 +57,16 @@ export function authenticate(nin, mode) {
   });
 }
 
+export function runBiometricVerification(token, probeId) {
+  return request("/biometric-verify", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ probe_id: probeId })
+  });
+}
+
 export function submitVote(token, vote) {
   const normalizedVote = normalizeVote(vote);
 

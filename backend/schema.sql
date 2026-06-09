@@ -3,9 +3,12 @@ CREATE TABLE IF NOT EXISTS voters (
     nin_hash TEXT NOT NULL UNIQUE,
     session_token_hash TEXT NOT NULL,
     token_expires_at TEXT NOT NULL,
+    biometric_verified INTEGER NOT NULL DEFAULT 0,
+    biometric_verified_at TEXT,
     has_voted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK (biometric_verified IN (0, 1)),
     CHECK (has_voted IN (0, 1))
 );
 
