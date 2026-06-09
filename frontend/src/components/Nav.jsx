@@ -1,26 +1,35 @@
 import { NavLink } from "react-router-dom";
+import Icon from "./Icon";
+
+const items = [
+  { to: "/", label: "Overview", icon: "home" },
+  { to: "/login", label: "Accreditation", icon: "user" },
+  { to: "/ballot", label: "Referendum Ballot", icon: "ballot" },
+  { to: "/receipt", label: "Vote Receipt", icon: "receipt" },
+  { to: "/board", label: "Public Verification", icon: "board" },
+  { to: "/tally", label: "Tally Dashboard", icon: "tally" }
+];
 
 export default function Nav({ currentPath, isAuthenticated, onLogout }) {
   return (
     <nav className="nav" aria-label="Primary">
-      <NavLink className={currentPath === "/login" ? "is-active" : ""} to="/login">
-        Login
-      </NavLink>
-      <NavLink className={currentPath === "/ballot" ? "is-active" : ""} to="/ballot">
-        Ballot
-      </NavLink>
-      <NavLink className={currentPath === "/receipt" ? "is-active" : ""} to="/receipt">
-        Receipt
-      </NavLink>
-      <NavLink className={currentPath === "/board" ? "is-active" : ""} to="/board">
-        Public Board
-      </NavLink>
-      <NavLink className={currentPath === "/tally" ? "is-active" : ""} to="/tally">
-        Tally
-      </NavLink>
+      <span className="nav__label">Portal</span>
+      {items.map((item) => {
+        const active =
+          currentPath === item.to ||
+          (item.to === "/ballot" && currentPath === "/eligibility");
+        return (
+          <NavLink className={active ? "is-active" : ""} key={item.to} to={item.to}>
+            <Icon name={item.icon} size={19} />
+            <span>{item.label}</span>
+            {active ? <i /> : null}
+          </NavLink>
+        );
+      })}
       {isAuthenticated ? (
-        <button type="button" onClick={onLogout}>
-          Logout
+        <button className="nav__logout" type="button" onClick={onLogout}>
+          <Icon name="logout" size={19} />
+          <span>End Session</span>
         </button>
       ) : null}
     </nav>

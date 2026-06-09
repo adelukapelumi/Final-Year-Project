@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Ballot from "./pages/Ballot";
+import Eligibility from "./pages/Eligibility";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import PublicBoard from "./pages/PublicBoard";
 import Receipt from "./pages/Receipt";
@@ -47,7 +49,15 @@ export default function App() {
   }, [receipt]);
 
   function handleAuthenticated(nextSession) {
-    setSession(nextSession);
+    setSession({ ...nextSession, eligibilityConfirmed: false });
+    navigate("/eligibility");
+  }
+
+  function handleEligibilityConfirmed() {
+    setSession((currentSession) => ({
+      ...currentSession,
+      eligibilityConfirmed: true
+    }));
     navigate("/ballot");
   }
 
@@ -59,7 +69,7 @@ export default function App() {
   function handleLogout() {
     setSession(null);
     setReceipt(null);
-    navigate("/login");
+    navigate("/");
   }
 
   const isAuthenticated = Boolean(session?.token);
@@ -71,10 +81,7 @@ export default function App() {
       onLogout={handleLogout}
     >
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to={isAuthenticated ? "/ballot" : "/login"} replace />}
-        />
+        <Route path="/" element={<Home />} />
         <Route
           path="/login"
           element={
@@ -85,10 +92,22 @@ export default function App() {
           }
         />
         <Route
-          path="/ballot"
+          path="/eligibility"
           element={
             isAuthenticated ? (
+              <Eligibility onConfirmed={handleEligibilityConfirmed} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/ballot"
+          element={
+            isAuthenticated && session?.eligibilityConfirmed ? (
               <Ballot session={session} onReceiptReady={handleReceipt} />
+            ) : isAuthenticated ? (
+              <Navigate to="/eligibility" replace />
             ) : (
               <Navigate to="/login" replace />
             )
