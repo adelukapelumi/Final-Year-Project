@@ -24,12 +24,28 @@ pnpm dev
 
 The Vite frontend expects the backend at `http://127.0.0.1:5000` and proxies the existing Flask endpoints there during local development.
 
-## Prototype Limitation
-
-This prototype uses mock NIN accreditation only. It does not implement biometric verification or OTP verification.
-
 ### Rust/Cargo Requirement
 
 Rust and Cargo are required locally because `POST /vote` calls the Winterfell proof engine through the Flask backend.
 
 If Rust/Cargo is missing, login and registration may still work, but voting will fail during proof generation.
+
+## Winterfell Benchmarks
+
+Run the real Winterfell accepted-ballot benchmark from the repository root:
+
+```bash
+python proof_engine/winterfell/benchmarks/run_benchmarks.py
+```
+
+What it does:
+
+- builds `proof_engine/winterfell` in release mode unless `--skip-build` is passed
+- runs the real Winterfell binary for `prove` and `verify`
+- benchmarks `1`, `10`, and `100` accepted ballots
+- writes the latest benchmark outputs to:
+  - `proof_engine/winterfell/benchmarks/results/benchmark_results.json`
+  - `proof_engine/winterfell/benchmarks/results/benchmark_results.csv`
+- writes timestamped archive copies under `proof_engine/winterfell/benchmarks/results/archive/`
+
+The benchmark also stores the generated proof artifacts under `proof_engine/winterfell/benchmarks/artifacts/` for local inspection, while keeping them out of Git by default.
