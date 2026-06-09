@@ -1,7 +1,17 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const VALID_VOTES = new Set(["yes", "no"]);
 
 function buildUrl(path) {
   return `${API_BASE_URL}${path}`;
+}
+
+function normalizeVote(vote) {
+  if (typeof vote !== "string") {
+    return "";
+  }
+
+  const normalizedVote = vote.toLowerCase();
+  return VALID_VOTES.has(normalizedVote) ? normalizedVote : "";
 }
 
 async function request(path, options = {}) {
@@ -48,12 +58,21 @@ export function authenticate(nin, mode) {
 }
 
 export function submitVote(token, vote) {
+  const normalizedVote = normalizeVote(vote);
+
+  if (!normalizedVote) {
+    throw {
+      status: 0,
+      message: "Select a valid Yes or No vote before submitting."
+    };
+  }
+
   return request("/vote", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ vote })
+    body: JSON.stringify({ vote: normalizedVote })
   });
 }
 

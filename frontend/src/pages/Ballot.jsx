@@ -3,15 +3,23 @@ import { fetchBoard, submitVote, verifyBallot } from "../api";
 
 const QUESTION =
   "Should secure diaspora voting be enabled for eligible Nigerians abroad?";
+const VOTE_OPTIONS = [
+  { label: "Yes", value: "yes" },
+  { label: "No", value: "no" }
+];
+const VALID_VOTES = new Set(VOTE_OPTIONS.map((option) => option.value));
 
 export default function Ballot({ session, onReceiptReady }) {
   const [selectedVote, setSelectedVote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const normalizedVote =
+    typeof selectedVote === "string" ? selectedVote.toLowerCase() : "";
+  const hasValidSelection = VALID_VOTES.has(normalizedVote);
 
   async function handleVote() {
-    if (!selectedVote) {
+    if (!hasValidSelection) {
       setError("Select Yes or No before submitting your ballot.");
       return;
     }
@@ -21,7 +29,7 @@ export default function Ballot({ session, onReceiptReady }) {
     setSuccess("");
 
     try {
-      const voteResult = await submitVote(session.token, selectedVote);
+      const voteResult = await submitVote(session.token, normalizedVote);
       await verifyBallot(voteResult.ballot_id);
       const board = await fetchBoard();
       const boardEntry = board.ballots.find((ballot) => ballot.ballot_id === voteResult.ballot_id);
@@ -48,18 +56,18 @@ export default function Ballot({ session, onReceiptReady }) {
 
       <div className="card stack">
         <div className="options">
-          {["yes", "no"].map((option) => {
-            const selected = selectedVote === option;
+          {VOTE_OPTIONS.map((option) => {
+            const selected = normalizedVote === option.value;
             return (
               <button
-                key={option}
+                key={option.value}
                 type="button"
                 className={`option${selected ? " is-selected" : ""}`}
-                onClick={() => setSelectedVote(option)}
+                onClick={() => setSelectedVote(option.value)}
               >
-                <strong>{option === "yes" ? "Yes" : "No"}</strong>
+                <strong>{option.label}</strong>
                 <div className="muted">
-                  {option === "yes"
+                  {option.value === "yes"
                     ? "Support enabling the secure diaspora voting flow."
                     : "Do not enable the secure diaspora voting flow."}
                 </div>
@@ -69,7 +77,12 @@ export default function Ballot({ session, onReceiptReady }) {
         </div>
 
         <div className="actions">
-          <button type="button" className="button" disabled={busy} onClick={handleVote}>
+          <button
+            type="button"
+            className="button"
+            disabled={busy || !hasValidSelection}
+            onClick={handleVote}
+          >
             {busy ? "Submitting..." : "Submit Vote"}
           </button>
         </div>
