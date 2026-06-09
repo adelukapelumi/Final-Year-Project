@@ -1,0 +1,4 @@
+ballot_count,proofs_generated,proofs_verified,generation_time_ms_total,generation_time_ms_average,generation_time_ms_min,generation_time_ms_max,verification_time_ms_total,verification_time_ms_average,verification_time_ms_min,verification_time_ms_max,proof_size_bytes_total,proof_size_bytes_average,proof_size_bytes_min,proof_size_bytes_max,engine_reported_generation_ms_total,engine_reported_generation_ms_average,engine_reported_verification_ms_total,engine_reported_verification_ms_average
+1,1,1,1066.678,1066.678,1066.678,1066.678,600.67,600.67,600.67,600.67,4523,4523,4523,4523,2.0,2.0,1.0,1.0
+10,10,10,9511.245,951.125,493.925,1788.577,5756.358,575.636,110.353,919.574,45220,4522,4521,4523,37.0,3.7,19.0,1.9
+100,100,100,54416.81,544.168,41.636,2219.285,48722.596,487.226,76.756,2340.178,452200,4522,4521,4523,301.0,3.01,230.0,2.3
