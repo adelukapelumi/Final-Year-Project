@@ -35,7 +35,7 @@ export default function Home() {
           </p>
           <div className="actions">
             <Link className="button button--gold" to="/login">
-              Begin Accreditation
+              Verify Eligibility
               <Icon name="arrow" size={18} />
             </Link>
             <Link className="button button--light" to="/board">

@@ -24,6 +24,10 @@ pnpm dev
 
 The Vite frontend expects the backend at `http://127.0.0.1:5000` and proxies the existing Flask endpoints there during local development.
 
+## Prototype Limitation
+
+This prototype uses mock NIN accreditation only. It does not implement biometric verification or OTP verification.
+
 ### Rust/Cargo Requirement
 
 Rust and Cargo are required locally because `POST /vote` calls the Winterfell proof engine through the Flask backend.

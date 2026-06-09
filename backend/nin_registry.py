@@ -18,3 +18,6 @@ class MockNINRegistry:
 
     def is_registered_hash(self, nin_hash: str) -> bool:
         return nin_hash in self._hashed_nins
+
+    def total_registered_voters(self) -> int:
+        return len(self._hashed_nins)

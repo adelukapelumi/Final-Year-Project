@@ -3,7 +3,7 @@ import Icon from "./Icon";
 
 const items = [
   { to: "/", label: "Overview", icon: "home" },
-  { to: "/login", label: "Accreditation", icon: "user" },
+  { to: "/login", label: "Voter Accreditation", icon: "user" },
   { to: "/ballot", label: "Referendum Ballot", icon: "ballot" },
   { to: "/receipt", label: "Vote Receipt", icon: "receipt" },
   { to: "/board", label: "Public Verification", icon: "board" },

@@ -78,14 +78,18 @@ export default function Tally() {
       {!loading && !error && tally ? (
         <>
           <div className="metric-grid">
-            <MetricCard label="Total Ballots" value={tally.total} icon="ballot" tone="navy" />
-            <MetricCard label="Yes Count" value={tally.yes} icon="check" tone="mint" />
-            <MetricCard label="No Count" value={tally.no} icon="close" tone="gold" />
+            <MetricCard label="Total Registered Voters" value={tally.total_registered_voters} icon="user" tone="navy" />
+            <MetricCard label="Total Ballots Cast" value={tally.total_ballots_cast} icon="ballot" tone="mint" />
+            <MetricCard label="Remaining Voters" value={tally.remaining_voters} icon="clock" tone="gold" />
             <div className="metric-card metric-card--status">
               <div>
                 <span>Election Status</span>
-                <strong>Status unavailable</strong>
-                <small>Not supplied by the current API</small>
+                <strong>{tally.status}</strong>
+                <small>
+                  {tally.status === "Completed"
+                    ? "All registered mock voters have cast ballots."
+                    : "Mock accreditation remains open for eligible voters."}
+                </small>
               </div>
               <span className="metric-card__icon"><Icon name="clock" size={22} /></span>
             </div>
@@ -99,11 +103,11 @@ export default function Tally() {
               </div>
               <div className="result-bars">
                 <div>
-                  <p><strong>Yes</strong><span>{tally.yes} ballots · {yesPercent}%</span></p>
+                  <p><strong>Yes</strong><span>{tally.yes} ballots | {yesPercent}%</span></p>
                   <div className="result-bar"><i style={{ width: `${yesPercent}%` }} /></div>
                 </div>
                 <div>
-                  <p><strong>No</strong><span>{tally.no} ballots · {noPercent}%</span></p>
+                  <p><strong>No</strong><span>{tally.no} ballots | {noPercent}%</span></p>
                   <div className="result-bar result-bar--no"><i style={{ width: `${noPercent}%` }} /></div>
                 </div>
               </div>
@@ -115,8 +119,8 @@ export default function Tally() {
               <span className="section-kicker section-kicker--light">Tally integrity</span>
               <h2>Publicly auditable.<br />Voter-private.</h2>
               <p>
-                Counts are returned by the existing tally service. Individual ballot
-                choices are not exposed on the public verification board.
+                Counts and election status are returned by the existing tally service.
+                Individual ballot choices are not exposed on the public verification board.
               </p>
               <div><Icon name="check" size={17} /> Public proof receipts</div>
               <div><Icon name="check" size={17} /> No voter identity shown</div>

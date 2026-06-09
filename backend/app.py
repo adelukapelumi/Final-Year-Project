@@ -138,7 +138,7 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.get("/tally")
     def tally():
-        return jsonify(compute_tally(app.config["ENCRYPTION_KEY"])), 200
+        return jsonify(compute_tally(app.config["ENCRYPTION_KEY"], app.config["NIN_REGISTRY_PATH"])), 200
 
     app.config["ENCRYPTION_KEY"] = Config.encryption_key(app.config["SECRET_KEY"])
     return app

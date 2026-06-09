@@ -4,15 +4,15 @@ import { authenticate } from "../api";
 
 export default function Login({ session, onAuthenticated }) {
   const [nin, setNin] = useState("");
-  const [busyMode, setBusyMode] = useState("");
+  const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(mode) {
-    setBusyMode(mode);
+  async function handleSubmit() {
+    setIsBusy(true);
     setError("");
 
     try {
-      const result = await authenticate(nin, mode);
+      const result = await authenticate(nin, "login");
       onAuthenticated({
         token: result.token,
         ninHash: result.nin_hash
@@ -20,7 +20,7 @@ export default function Login({ session, onAuthenticated }) {
     } catch (requestError) {
       setError(requestError.message || "Accreditation failed.");
     } finally {
-      setBusyMode("");
+      setIsBusy(false);
     }
   }
 
@@ -28,8 +28,8 @@ export default function Login({ session, onAuthenticated }) {
     <section className="page auth-page">
       <div className="auth-panel auth-panel--intro">
         <div>
-          <span className="section-kicker section-kicker--light">Voter access</span>
-          <h1>Accreditation that protects your identity.</h1>
+          <span className="section-kicker section-kicker--light">Voter Accreditation</span>
+          <h1>Voter accreditation that protects your identity.</h1>
           <p>
             Confirm your eligibility through the existing secure voter endpoint.
             Your identity credential is never published with your ballot.
@@ -78,8 +78,8 @@ export default function Login({ session, onAuthenticated }) {
                 value={nin}
                 onChange={(event) => setNin(event.target.value.replace(/\D/g, ""))}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !busyMode) {
-                    handleSubmit("login");
+                  if (event.key === "Enter" && !isBusy) {
+                    handleSubmit();
                   }
                 }}
               />
@@ -97,22 +97,11 @@ export default function Login({ session, onAuthenticated }) {
           <button
             type="button"
             className="button button--primary button--wide"
-            disabled={Boolean(busyMode) || nin.length !== 11}
-            onClick={() => handleSubmit("login")}
+            disabled={isBusy || nin.length !== 11}
+            onClick={handleSubmit}
           >
-            {busyMode === "login" ? "Confirming eligibility..." : "Accredit & Continue"}
-            {!busyMode ? <Icon name="arrow" size={18} /> : <span className="spinner spinner--small" />}
-          </button>
-
-          <div className="register-divider"><span>First time in this prototype?</span></div>
-
-          <button
-            type="button"
-            className="button button--outline button--wide"
-            disabled={Boolean(busyMode) || nin.length !== 11}
-            onClick={() => handleSubmit("register")}
-          >
-            {busyMode === "register" ? "Registering..." : "Register Prototype Voter"}
+            {isBusy ? "Accredit & Continue..." : "Accredit & Continue"}
+            {!isBusy ? <Icon name="arrow" size={18} /> : <span className="spinner spinner--small" />}
           </button>
 
           {session?.token ? (
