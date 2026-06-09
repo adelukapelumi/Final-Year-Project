@@ -1,13 +1,53 @@
 import { useEffect, useState } from "react";
 import Icon from "../components/Icon";
-import { fetchBoard } from "../api";
+import { fetchBoard, verifyBallot } from "../api";
+
+function formatVerificationTimestamp(value) {
+  if (!value) {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "medium"
+    }).format(new Date());
+  }
+
+  return value;
+}
+
+function buildVerificationResult({
+  ballotId,
+  proofHash,
+  boardProofHash,
+  verified,
+  timestamp,
+  error = ""
+}) {
+  const hashMatches = Boolean(boardProofHash) && proofHash === boardProofHash;
+  const success = Boolean(verified) && hashMatches && !error;
+
+  return {
+    ballotId,
+    proofHash: proofHash || "Unavailable",
+    boardProofHash: boardProofHash || "Unavailable on public board",
+    verified: Boolean(verified) && !error,
+    hashMatches,
+    success,
+    timestamp: formatVerificationTimestamp(timestamp),
+    error,
+    message: success
+      ? "Proof verified and receipt hash matches public board record."
+      : "Proof verification failed or receipt mismatch."
+  };
+}
 
 export default function PublicBoard() {
   const [ballots, setBallots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [receiptQuery, setReceiptQuery] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [verifyingBallotId, setVerifyingBallotId] = useState("");
+  const [verificationResult, setVerificationResult] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +82,61 @@ export default function PublicBoard() {
   const visibleBallots = normalizedQuery
     ? ballots.filter((ballot) => ballot.ballot_id.toLowerCase().includes(normalizedQuery))
     : ballots;
+  const normalizedReceiptQuery = receiptQuery.trim();
+
+  async function runVerification(ballotId, boardProofHash = "") {
+    const normalizedBallotId = String(ballotId || "").trim();
+    const boardBallot = ballots.find((ballot) => ballot.ballot_id === normalizedBallotId);
+    const publicProofHash = boardProofHash || boardBallot?.proof_hash || "";
+
+    if (!normalizedBallotId) {
+      setVerificationResult(
+        buildVerificationResult({
+          ballotId: "Unavailable",
+          proofHash: "",
+          boardProofHash: publicProofHash,
+          verified: false,
+          timestamp: "",
+          error: "Enter a Ballot ID before attempting verification."
+        })
+      );
+      return;
+    }
+
+    setReceiptQuery(normalizedBallotId);
+    setVerifyingBallotId(normalizedBallotId);
+
+    try {
+      const result = await verifyBallot(normalizedBallotId);
+      setVerificationResult(
+        buildVerificationResult({
+          ballotId: result.ballot_id || normalizedBallotId,
+          proofHash: result.proof_hash || "",
+          boardProofHash: publicProofHash,
+          verified: result.verified,
+          timestamp: result.timestamp || ""
+        })
+      );
+    } catch (requestError) {
+      setVerificationResult(
+        buildVerificationResult({
+          ballotId: normalizedBallotId,
+          proofHash: "",
+          boardProofHash: publicProofHash,
+          verified: false,
+          timestamp: "",
+          error: requestError.message || "Verification request failed."
+        })
+      );
+    } finally {
+      setVerifyingBallotId("");
+    }
+  }
+
+  function handleReceiptVerification(event) {
+    event.preventDefault();
+    runVerification(normalizedReceiptQuery);
+  }
 
   return (
     <section className="page">
@@ -60,12 +155,87 @@ export default function PublicBoard() {
       <div className="board-summary">
         <div>
           <span className="icon-tile"><Icon name="board" /></span>
-          <p><small>Published receipts</small><strong>{loading ? "—" : ballots.length}</strong></p>
+          <p><small>Published receipts</small><strong>{loading ? "-" : ballots.length}</strong></p>
         </div>
         <div className="board-summary__privacy">
           <Icon name="shield" size={22} />
           <p><strong>Privacy-preserving record</strong><span>Only public cryptographic metadata is displayed.</span></p>
         </div>
+      </div>
+
+      <div className="verification-card">
+        <div className="verification-card__header">
+          <div>
+            <span className="section-kicker">Server-mediated verification</span>
+            <h2>Verify a public ballot receipt</h2>
+            <p>Paste a Ballot ID or use any board row to re-run proof verification without revealing identity or ballot choice.</p>
+          </div>
+        </div>
+
+        <form className="verification-form" onSubmit={handleReceiptVerification}>
+          <label className="input-wrap verification-form__input">
+            <Icon name="receipt" size={18} />
+            <input
+              aria-label="Verify receipt by ballot ID"
+              placeholder="Paste Ballot ID from receipt"
+              value={receiptQuery}
+              onChange={(event) => setReceiptQuery(event.target.value)}
+            />
+          </label>
+          <button
+            className="button button--primary"
+            type="submit"
+            disabled={!normalizedReceiptQuery || Boolean(verifyingBallotId)}
+          >
+            <Icon name={verifyingBallotId === normalizedReceiptQuery ? "clock" : "shield"} size={17} />
+            {verifyingBallotId === normalizedReceiptQuery ? "Verifying..." : "Verify Receipt"}
+          </button>
+        </form>
+
+        {verificationResult ? (
+          <div className="verification-result">
+            <div className="verification-result__summary">
+              <span className={`status-badge ${verificationResult.success ? "status-badge--success" : "status-badge--error"}`}>
+                <Icon name={verificationResult.success ? "check" : "close"} size={14} />
+                {verificationResult.success ? "Proof verified" : "Verification failed"}
+              </span>
+              <p>{verificationResult.message}</p>
+            </div>
+
+            <div className="verification-result__grid">
+              <div>
+                <small>Ballot ID</small>
+                <code>{verificationResult.ballotId}</code>
+              </div>
+              <div>
+                <small>Proof hash</small>
+                <code>{verificationResult.proofHash}</code>
+              </div>
+              <div>
+                <small>Public board hash</small>
+                <code>{verificationResult.boardProofHash}</code>
+              </div>
+              <div>
+                <small>Verification timestamp</small>
+                <strong>{verificationResult.timestamp}</strong>
+              </div>
+            </div>
+
+            {verificationResult.error ? (
+              <div className="status status--error">
+                <div>
+                  <strong>Verification detail</strong>
+                  <span>{verificationResult.error}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="verification-card__hint">
+            <Icon name="shield" size={18} />
+            <span>Use a board row or paste a Ballot ID to confirm the public receipt hash against the verifier response.</span>
+          </div>
+        )}
       </div>
 
       <div className="table-card">
@@ -108,12 +278,24 @@ export default function PublicBoard() {
                 <span>Ballot ID</span>
                 <span>Proof Hash</span>
                 <span>Timestamp</span>
+                <span>Action</span>
               </div>
               {visibleBallots.map((ballot) => (
                 <div className="board-table__row" key={ballot.ballot_id}>
                   <div data-label="Ballot ID"><code>{ballot.ballot_id}</code></div>
                   <div data-label="Proof Hash"><code>{ballot.proof_hash}</code></div>
                   <div data-label="Timestamp"><span>{ballot.timestamp}</span></div>
+                  <div data-label="Action" className="board-table__actions">
+                    <button
+                      className="button button--outline button--small"
+                      type="button"
+                      disabled={Boolean(verifyingBallotId)}
+                      onClick={() => runVerification(ballot.ballot_id, ballot.proof_hash)}
+                    >
+                      <Icon name={verifyingBallotId === ballot.ballot_id ? "clock" : "shield"} size={15} />
+                      {verifyingBallotId === ballot.ballot_id ? "Verifying..." : "Verify Proof"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

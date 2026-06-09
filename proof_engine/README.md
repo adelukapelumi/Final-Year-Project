@@ -132,6 +132,21 @@ Invalid inputs should panic during execution and therefore never produce a proof
 
 Run this same `proof_engine/cairo` directory on a supported Linux or WSL host with current Cairo/Scarb proving support installed. That is the shortest path to determining whether the exact Cairo program here can generate and verify a real artifact under `proof_engine/cairo/artifacts/`.
 
+## Winterfell benchmark support
+
+The accepted Winterfell proof path used by the Flask backend can be benchmarked locally with:
+
+```bash
+python proof_engine/winterfell/benchmarks/run_benchmarks.py
+```
+
+This script uses the real Winterfell `prove` and `verify` commands, benchmarks `1`, `10`, and `100` accepted ballots, and writes:
+
+- JSON: `proof_engine/winterfell/benchmarks/results/benchmark_results.json`
+- CSV: `proof_engine/winterfell/benchmarks/results/benchmark_results.csv`
+
+Each run also writes timestamped archive copies under `proof_engine/winterfell/benchmarks/results/archive/` and stores the generated proof artifacts under `proof_engine/winterfell/benchmarks/artifacts/`.
+
 ## Issue report
 
 ```txt
