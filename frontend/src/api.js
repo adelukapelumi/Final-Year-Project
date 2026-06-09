@@ -17,11 +17,11 @@ function normalizeVote(vote) {
 async function request(path, options = {}) {
   try {
     const response = await fetch(buildUrl(path), {
+      ...options,
       headers: {
         "Content-Type": "application/json",
         ...(options.headers || {})
-      },
-      ...options
+      }
     });
 
     const contentType = response.headers.get("content-type") || "";
