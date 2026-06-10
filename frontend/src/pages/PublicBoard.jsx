@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Icon from "../components/Icon";
-import { fetchBoard, verifyBallot } from "../api";
+import { fetchBoard, fetchEvents, verifyBallot } from "../api";
+import { ACTIVE_EVENT_ID, FALLBACK_EVENTS } from "../events";
 
 function formatVerificationTimestamp(value) {
   if (!value) {
@@ -19,6 +20,8 @@ function buildVerificationResult({
   boardProofHash,
   verified,
   timestamp,
+  eventId,
+  eventTitle,
   error = ""
 }) {
   const hashMatches = Boolean(boardProofHash) && proofHash === boardProofHash;
@@ -26,6 +29,8 @@ function buildVerificationResult({
 
   return {
     ballotId,
+    eventId,
+    eventTitle,
     proofHash: proofHash || "Unavailable",
     boardProofHash: boardProofHash || "Unavailable on public board",
     verified: Boolean(verified) && !error,
@@ -40,6 +45,8 @@ function buildVerificationResult({
 }
 
 export default function PublicBoard() {
+  const [events, setEvents] = useState(FALLBACK_EVENTS);
+  const [selectedEventId, setSelectedEventId] = useState(ACTIVE_EVENT_ID);
   const [ballots, setBallots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -52,12 +59,33 @@ export default function PublicBoard() {
   useEffect(() => {
     let cancelled = false;
 
+    fetchEvents()
+      .then((result) => {
+        if (!cancelled) {
+          setEvents(result.events || []);
+          setSelectedEventId(result.active_event_id || ACTIVE_EVENT_ID);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEvents(FALLBACK_EVENTS);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function loadBoard() {
       setLoading(true);
       setError("");
 
       try {
-        const result = await fetchBoard();
+        const result = await fetchBoard(selectedEventId);
         if (!cancelled) {
           setBallots(result.ballots || []);
         }
@@ -76,7 +104,7 @@ export default function PublicBoard() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, selectedEventId]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const visibleBallots = normalizedQuery
@@ -84,7 +112,7 @@ export default function PublicBoard() {
     : ballots;
   const normalizedReceiptQuery = receiptQuery.trim();
 
-  async function runVerification(ballotId, boardProofHash = "") {
+  async function runVerification(ballotId, boardProofHash = "", eventId = selectedEventId) {
     const normalizedBallotId = String(ballotId || "").trim();
     const boardBallot = ballots.find((ballot) => ballot.ballot_id === normalizedBallotId);
     const publicProofHash = boardProofHash || boardBallot?.proof_hash || "";
@@ -97,6 +125,8 @@ export default function PublicBoard() {
           boardProofHash: publicProofHash,
           verified: false,
           timestamp: "",
+          eventId,
+          eventTitle: events.find((event) => event.event_id === eventId)?.title || eventId,
           error: "Enter a Ballot ID before attempting verification."
         })
       );
@@ -107,14 +137,16 @@ export default function PublicBoard() {
     setVerifyingBallotId(normalizedBallotId);
 
     try {
-      const result = await verifyBallot(normalizedBallotId);
+      const result = await verifyBallot(normalizedBallotId, eventId);
       setVerificationResult(
         buildVerificationResult({
           ballotId: result.ballot_id || normalizedBallotId,
           proofHash: result.proof_hash || "",
           boardProofHash: publicProofHash,
           verified: result.verified,
-          timestamp: result.timestamp || ""
+          timestamp: boardBallot?.timestamp || result.timestamp || "",
+          eventId: result.event_id || eventId,
+          eventTitle: events.find((event) => event.event_id === eventId)?.title || eventId
         })
       );
     } catch (requestError) {
@@ -125,6 +157,8 @@ export default function PublicBoard() {
           boardProofHash: publicProofHash,
           verified: false,
           timestamp: "",
+          eventId,
+          eventTitle: events.find((event) => event.event_id === eventId)?.title || eventId,
           error: requestError.message || "Verification request failed."
         })
       );
@@ -138,6 +172,15 @@ export default function PublicBoard() {
     runVerification(normalizedReceiptQuery);
   }
 
+  const selectedEvent = events.find((event) => event.event_id === selectedEventId);
+  const selectedEventStatus = selectedEvent?.status || "";
+  const emptyStateTitle =
+    selectedEventStatus === "Upcoming" ? "This event is coming soon" : "No ballots published yet";
+  const emptyStateMessage =
+    selectedEventStatus === "Upcoming"
+      ? "Public proof receipts will appear here after this referendum opens."
+      : "Proof receipts will appear here after successful submissions.";
+
   return (
     <section className="page">
       <div className="dashboard-heading">
@@ -150,6 +193,30 @@ export default function PublicBoard() {
           <Icon name="refresh" size={17} />
           Refresh Board
         </button>
+      </div>
+
+      <div className="event-filter-bar">
+        <div>
+          <span className="section-kicker">Event filter</span>
+          <strong>{selectedEvent?.title || FALLBACK_EVENTS[0].title}</strong>
+        </div>
+        <label className="event-select">
+          <span>Referendum event</span>
+          <select
+            value={selectedEventId}
+            onChange={(event) => {
+              setSelectedEventId(event.target.value);
+              setVerificationResult(null);
+              setReceiptQuery("");
+            }}
+          >
+            {events.map((event) => (
+              <option key={event.event_id} value={event.event_id}>
+                {event.title}{event.status ? ` - ${event.status}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="board-summary">
@@ -206,6 +273,10 @@ export default function PublicBoard() {
               <div>
                 <small>Ballot ID</small>
                 <code>{verificationResult.ballotId}</code>
+              </div>
+              <div>
+                <small>Referendum event</small>
+                <strong>{verificationResult.eventTitle}</strong>
               </div>
               <div>
                 <small>Proof hash</small>
@@ -267,8 +338,8 @@ export default function PublicBoard() {
         {!loading && !error && ballots.length === 0 ? (
           <div className="empty-state empty-state--compact">
             <span className="icon-tile"><Icon name="board" /></span>
-            <h2>No ballots published yet</h2>
-            <p>Proof receipts will appear here after successful submissions.</p>
+            <h2>{emptyStateTitle}</h2>
+            <p>{emptyStateMessage}</p>
           </div>
         ) : null}
         {!loading && !error && ballots.length > 0 ? (
@@ -276,6 +347,7 @@ export default function PublicBoard() {
             <div className="board-table">
               <div className="board-table__head">
                 <span>Ballot ID</span>
+                <span>Event</span>
                 <span>Proof Hash</span>
                 <span>Timestamp</span>
                 <span>Verification result</span>
@@ -283,6 +355,7 @@ export default function PublicBoard() {
               {visibleBallots.map((ballot) => (
                 <div className="board-table__row" key={ballot.ballot_id}>
                   <div data-label="Ballot ID"><code>{ballot.ballot_id}</code></div>
+                  <div data-label="Event"><span>{ballot.event_title}</span></div>
                   <div data-label="Proof Hash"><code>{ballot.proof_hash}</code></div>
                   <div data-label="Timestamp"><span>{ballot.timestamp}</span></div>
                   <div data-label="Verification result" className="board-table__actions">
@@ -290,7 +363,7 @@ export default function PublicBoard() {
                       className="button button--outline button--small"
                       type="button"
                       disabled={Boolean(verifyingBallotId)}
-                      onClick={() => runVerification(ballot.ballot_id, ballot.proof_hash)}
+                      onClick={() => runVerification(ballot.ballot_id, ballot.proof_hash, ballot.event_id)}
                     >
                       <Icon name={verifyingBallotId === ballot.ballot_id ? "clock" : "shield"} size={15} />
                       {verifyingBallotId === ballot.ballot_id

@@ -10,6 +10,7 @@ from auth import authenticate_token, register_or_login, resolve_token_from_reque
 from config import Config
 from crypto_utils import encrypt_vote
 from db import close_db, get_db, init_db
+from events import ACTIVE_EVENT_ID, list_events, require_event
 from nin_registry import MockNINRegistry, PROTOTYPE_FALLBACK_MESSAGE
 from proof_client import ProofClientError, generate_and_verify_proof, verify_existing_proof
 from tally_service import compute_tally, fetch_ballot_for_verification, public_board
@@ -67,6 +68,10 @@ def create_app(test_config: dict | None = None) -> Flask:
             200,
         )
 
+    @app.get("/events")
+    def events():
+        return jsonify({"events": list_events(), "active_event_id": ACTIVE_EVENT_ID}), 200
+
     @app.post("/biometric-verify")
     def biometric_verify():
         payload = request.get_json(silent=True) or {}
@@ -77,9 +82,6 @@ def create_app(test_config: dict | None = None) -> Flask:
             return jsonify({"error": str(exc)}), 400
         except PermissionError as exc:
             return jsonify({"error": str(exc)}), 403
-
-        if voter["has_voted"]:
-            return jsonify({"error": "voter has already cast a ballot"}), 409
 
         registry = MockNINRegistry(app.config["NIN_REGISTRY_PATH"])
         camera_capture = payload.get("camera_capture") is True
@@ -133,6 +135,7 @@ def create_app(test_config: dict | None = None) -> Flask:
             token = resolve_token_from_request(request)
             voter = authenticate_token(token)
             vote_value, vote_label = _normalize_vote_value(payload.get("vote"))
+            event = require_event(payload.get("event_id"))
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
         except PermissionError as exc:
@@ -140,9 +143,14 @@ def create_app(test_config: dict | None = None) -> Flask:
 
         if not voter["biometric_verified"]:
             return jsonify({"error": "biometric verification required before ballot access"}), 403
+        if not event["action_enabled"] or event["status"] != "Active":
+            return jsonify({"error": "referendum event is not open for voting"}), 409
 
         db = get_db()
-        prior_vote = db.execute("SELECT ballot_id FROM ballots WHERE voter_id = ?", (voter["id"],)).fetchone()
+        prior_vote = db.execute(
+            "SELECT ballot_id FROM ballots WHERE voter_id = ? AND event_id = ?",
+            (voter["id"], event["event_id"]),
+        ).fetchone()
         if prior_vote is not None:
             return jsonify({"error": "duplicate vote rejected"}), 409
 
@@ -158,16 +166,18 @@ def create_app(test_config: dict | None = None) -> Flask:
             INSERT INTO ballots (
                 ballot_id,
                 voter_id,
+                event_id,
                 encrypted_vote,
                 proof_hash,
                 proof_path,
                 public_inputs,
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """,
             (
                 ballot_id,
                 voter["id"],
+                event["event_id"],
                 encrypted_vote,
                 proof_result["proof_hash"],
                 proof_result["proof_path"],
@@ -181,6 +191,8 @@ def create_app(test_config: dict | None = None) -> Flask:
             jsonify(
                 {
                     "ballot_id": ballot_id,
+                    "event_id": event["event_id"],
+                    "event_title": event["title"],
                     "proof_hash": proof_result["proof_hash"],
                 }
             ),
@@ -191,27 +203,65 @@ def create_app(test_config: dict | None = None) -> Flask:
     def verify():
         payload = request.get_json(silent=True) or {}
         ballot_id = payload.get("ballot_id")
+        event_id = payload.get("event_id")
         if not ballot_id:
             return jsonify({"error": "ballot_id is required"}), 400
 
-        ballot = fetch_ballot_for_verification(str(ballot_id))
+        if event_id:
+            try:
+                require_event(event_id)
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        ballot = fetch_ballot_for_verification(str(ballot_id), str(event_id) if event_id else None)
         if ballot is None:
             return jsonify({"error": "ballot not found"}), 404
+
+        if ballot.get("is_demo"):
+            return jsonify(
+                {
+                    "ballot_id": ballot["ballot_id"],
+                    "event_id": ballot["event_id"],
+                    "verified": True,
+                    "proof_hash": ballot["proof_hash"],
+                }
+            ), 200
 
         try:
             result = verify_existing_proof(ballot["public_inputs"], ballot["proof_path"])
         except ProofClientError as exc:
             return jsonify({"error": f"proof verification failed: {exc}"}), 500
 
-        return jsonify({"ballot_id": ballot["ballot_id"], "verified": result["verified"], "proof_hash": result["proof_hash"]}), 200
+        return jsonify(
+            {
+                "ballot_id": ballot["ballot_id"],
+                "event_id": ballot["event_id"],
+                "verified": result["verified"],
+                "proof_hash": result["proof_hash"],
+            }
+        ), 200
 
     @app.get("/board")
     def board():
-        return jsonify({"ballots": public_board()}), 200
+        try:
+            event = require_event(request.args.get("event_id"))
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify({"event": event, "ballots": public_board(event["event_id"])}), 200
 
     @app.get("/tally")
     def tally():
-        return jsonify(compute_tally(app.config["ENCRYPTION_KEY"], app.config["NIN_REGISTRY_PATH"])), 200
+        try:
+            event = require_event(request.args.get("event_id"))
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify(
+            compute_tally(
+                app.config["ENCRYPTION_KEY"],
+                app.config["NIN_REGISTRY_PATH"],
+                event["event_id"],
+            )
+        ), 200
 
     app.config["ENCRYPTION_KEY"] = Config.encryption_key(app.config["SECRET_KEY"])
     return app

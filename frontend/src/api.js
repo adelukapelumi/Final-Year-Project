@@ -70,7 +70,11 @@ export function verifyCameraCapture(token, detectionMode) {
   });
 }
 
-export function submitVote(token, vote) {
+export function fetchEvents() {
+  return request("/events", { method: "GET" });
+}
+
+export function submitVote(token, eventId, vote) {
   const normalizedVote = normalizeVote(vote);
 
   if (!normalizedVote) {
@@ -85,21 +89,23 @@ export function submitVote(token, vote) {
     headers: {
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ vote: normalizedVote })
+    body: JSON.stringify({ event_id: eventId, vote: normalizedVote })
   });
 }
 
-export function verifyBallot(ballotId) {
+export function verifyBallot(ballotId, eventId) {
   return request("/verify", {
     method: "POST",
-    body: JSON.stringify({ ballot_id: ballotId })
+    body: JSON.stringify({ ballot_id: ballotId, event_id: eventId })
   });
 }
 
-export function fetchBoard() {
-  return request("/board", { method: "GET" });
+export function fetchBoard(eventId) {
+  const query = eventId ? `?event_id=${encodeURIComponent(eventId)}` : "";
+  return request(`/board${query}`, { method: "GET" });
 }
 
-export function fetchTally() {
-  return request("/tally", { method: "GET" });
+export function fetchTally(eventId) {
+  const query = eventId ? `?event_id=${encodeURIComponent(eventId)}` : "";
+  return request(`/tally${query}`, { method: "GET" });
 }

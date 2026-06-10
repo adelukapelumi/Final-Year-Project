@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from db import get_db
 from test_support import accredit, create_test_app, register, vote
 
 
@@ -25,6 +26,8 @@ class VoteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         body = response.get_json()
         self.assertTrue(body["ballot_id"])
+        self.assertEqual(body["event_id"], "diaspora-referendum-2026")
+        self.assertEqual(body["event_title"], "Diaspora Voting Referendum")
         self.assertEqual(len(body["proof_hash"]), 64)
         self.assertNotIn("proof_path", body)
         self.assertNotIn("public_inputs", body)
@@ -40,6 +43,54 @@ class VoteTests(unittest.TestCase):
         self.assertEqual(first.status_code, 201)
         self.assertEqual(second.status_code, 409)
         self.assertEqual(second.get_json()["error"], "duplicate vote rejected")
+
+    def test_ballot_uniqueness_is_scoped_per_voter_and_event(self):
+        auth = accredit(self.client)
+        token = auth.get_json()["token"]
+        first = vote(self.client, token, "yes")
+
+        with self.app.app_context():
+            db = get_db()
+            voter_id = db.execute(
+                "SELECT id FROM voters ORDER BY id LIMIT 1"
+            ).fetchone()["id"]
+            db.execute(
+                """
+                INSERT INTO ballots (
+                    ballot_id,
+                    voter_id,
+                    event_id,
+                    encrypted_vote,
+                    proof_hash,
+                    proof_path,
+                    public_inputs
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "closed-event-ballot",
+                    voter_id,
+                    "secure-ballot-audit-drill",
+                    "test-encrypted-vote",
+                    "test-proof-hash",
+                    "test-proof-path",
+                    "{}",
+                ),
+            )
+            db.commit()
+
+        self.assertEqual(first.status_code, 201)
+
+    def test_vote_rejects_unknown_and_non_active_events(self):
+        auth = accredit(self.client)
+        token = auth.get_json()["token"]
+
+        unknown = vote(self.client, token, "yes", "missing-event")
+        upcoming = vote(self.client, token, "yes", "overseas-voter-education-poll")
+
+        self.assertEqual(unknown.status_code, 400)
+        self.assertEqual(unknown.get_json()["error"], "unknown referendum event")
+        self.assertEqual(upcoming.status_code, 409)
+        self.assertEqual(upcoming.get_json()["error"], "referendum event is not open for voting")
 
     def test_vote_requires_biometric_verification_before_ballot_access(self):
         auth = register(self.client)

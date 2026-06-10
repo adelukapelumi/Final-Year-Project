@@ -27,6 +27,7 @@ export default function BiometricVerification({ session, onEndSession, onVerifie
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const continueTimerRef = useRef(null);
   const [cameraState, setCameraState] = useState("idle");
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,6 +36,9 @@ export default function BiometricVerification({ session, onEndSession, onVerifie
 
   useEffect(() => {
     return () => {
+      if (continueTimerRef.current) {
+        window.clearTimeout(continueTimerRef.current);
+      }
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
@@ -111,6 +115,9 @@ export default function BiometricVerification({ session, onEndSession, onVerifie
       setDetectionMode(mode);
       setCameraState("verified");
       streamRef.current?.getTracks().forEach((track) => track.stop());
+      continueTimerRef.current = window.setTimeout(() => {
+        onVerified({ capturedImage: image, detectionMode: mode });
+      }, 700);
     } catch (scanError) {
       setError(scanError.message || "Camera-based prototype verification failed.");
     } finally {
@@ -180,13 +187,15 @@ export default function BiometricVerification({ session, onEndSession, onVerifie
             <span className="section-kicker">Verification status</span>
             <h2>
               {cameraState === "verified"
-                ? "Session profile captured"
+                ? "Face presence verified"
                 : cameraState === "live"
                   ? "Position your face in the guide"
                   : "Open your camera to begin"}
             </h2>
             <p>
-              {detectionMode === "native-face-detector"
+              {cameraState === "verified"
+                ? "Your session profile frame has been captured. Opening the dashboard automatically."
+                : detectionMode === "native-face-detector"
                 ? "This browser provided native face-presence detection."
                 : "If native face detection is unavailable, the development fallback validates and captures a live camera frame."}
             </p>
@@ -213,14 +222,10 @@ export default function BiometricVerification({ session, onEndSession, onVerifie
             </button>
           ) : null}
           {cameraState === "verified" ? (
-            <button
-              className="button button--primary button--wide"
-              type="button"
-              onClick={() => onVerified({ capturedImage, detectionMode })}
-            >
-              Continue to Dashboard
-              <Icon name="arrow" size={18} />
-            </button>
+            <div className="status status--success">
+              <strong>Face presence verified</strong>
+              <span>Continue to Dashboard is automatic for this step.</span>
+            </div>
           ) : null}
           <button className="text-button camera-end-session" type="button" onClick={onEndSession}>
             End Session

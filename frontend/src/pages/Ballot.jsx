@@ -1,9 +1,6 @@
 import { useState } from "react";
 import Icon from "../components/Icon";
 import { fetchBoard, submitVote, verifyBallot } from "../api";
-
-const QUESTION =
-  "Should secure diaspora voting be enabled for eligible Nigerians abroad?";
 const VOTE_OPTIONS = [
   {
     label: "Yes",
@@ -28,6 +25,7 @@ function minimumStageDuration(milliseconds = 650) {
 }
 
 export default function Ballot({ session, onReceiptReady }) {
+  const event = session.selectedEvent;
   const [selectedVote, setSelectedVote] = useState("");
   const [step, setStep] = useState("ballot");
   const [processingStage, setProcessingStage] = useState("generating");
@@ -45,20 +43,22 @@ export default function Ballot({ session, onReceiptReady }) {
     setError("");
 
     try {
-      const voteResult = await submitVote(session.token, selectedVote);
+      const voteResult = await submitVote(session.token, event.event_id, selectedVote);
       setProcessingStage("verifying");
       const [verification] = await Promise.all([
-        verifyBallot(voteResult.ballot_id),
+        verifyBallot(voteResult.ballot_id, event.event_id),
         minimumStageDuration()
       ]);
       setProcessingStage("publishing");
-      const [board] = await Promise.all([fetchBoard(), minimumStageDuration()]);
+      const [board] = await Promise.all([fetchBoard(event.event_id), minimumStageDuration()]);
       const boardEntry = (board.ballots || []).find(
         (ballot) => ballot.ballot_id === voteResult.ballot_id
       );
 
       onReceiptReady({
         ballotId: voteResult.ballot_id,
+        eventId: event.event_id,
+        eventTitle: event.title,
         proofHash: voteResult.proof_hash,
         timestamp: boardEntry?.timestamp || "Timestamp unavailable",
         verified: Boolean(verification.verified)
@@ -117,7 +117,7 @@ export default function Ballot({ session, onReceiptReady }) {
 
         <div className="review-card">
           <div className="review-card__label">Referendum question</div>
-          <h2>{QUESTION}</h2>
+          <h2>{event.question}</h2>
           <div className="review-selection">
             <span className={`vote-symbol vote-symbol--${selectedVote}`}>
               <Icon name={selectedVote === "yes" ? "check" : "close"} size={28} />
@@ -162,7 +162,7 @@ export default function Ballot({ session, onReceiptReady }) {
       <div className="step-heading">
         <div>
           <span className="section-kicker">Step 4 of 6</span>
-          <h1>Referendum Ballot</h1>
+          <h1>{event.title}</h1>
           <p>Select one response. Your ballot will not be submitted until you review and confirm it.</p>
         </div>
         <span className="secure-chip"><Icon name="shield" size={15} /> Eligibility confirmed</span>
@@ -171,8 +171,8 @@ export default function Ballot({ session, onReceiptReady }) {
       <div className="ballot-card">
         <div className="ballot-card__top">
           <div>
-            <span className="status-badge status-badge--neutral">Binary Referendum · Question 01</span>
-            <h2>{QUESTION}</h2>
+            <span className="status-badge status-badge--neutral">{event.ballot_type} · {event.status}</span>
+            <h2>{event.question}</h2>
           </div>
           <span className="ballot-seal"><Icon name="ballot" size={26} /></span>
         </div>

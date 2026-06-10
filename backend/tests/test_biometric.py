@@ -57,7 +57,7 @@ class BiometricVerificationTests(unittest.TestCase):
         self.assertFalse(response.get_json()["verified"])
         self.assertEqual(response.get_json()["error"], "camera-based prototype verification failed")
 
-    def test_biometric_verification_cannot_run_after_vote_is_cast(self):
+    def test_biometric_verification_can_start_a_later_event_session(self):
         auth = register(self.client)
         token = auth.get_json()["token"]
         biometric_verify(self.client, token, "diaspora-face-match")
@@ -65,8 +65,8 @@ class BiometricVerificationTests(unittest.TestCase):
 
         response = biometric_verify(self.client, token, "diaspora-face-match")
 
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.get_json()["error"], "voter has already cast a ballot")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["verified"])
 
 
 if __name__ == "__main__":

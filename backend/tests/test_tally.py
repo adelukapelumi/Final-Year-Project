@@ -29,6 +29,17 @@ class TallyTests(unittest.TestCase):
         self.assertEqual(
             response.get_json(),
             {
+                "event": {
+                    "event_id": "diaspora-referendum-2026",
+                    "title": "Diaspora Voting Referendum",
+                    "question": "Should secure diaspora voting be enabled for eligible Nigerians abroad?",
+                    "ballot_type": "Binary referendum",
+                    "status": "Active",
+                    "description": "A prototype referendum on enabling secure voting access for eligible Nigerians abroad.",
+                    "start_date": "June 10, 2026",
+                    "end_date": "June 30, 2026",
+                    "action_enabled": True,
+                },
                 "yes": 1,
                 "no": 1,
                 "total": 2,
@@ -55,6 +66,27 @@ class TallyTests(unittest.TestCase):
         self.assertEqual(response.get_json()["total_ballots_cast"], 3)
         self.assertEqual(response.get_json()["remaining_voters"], 0)
         self.assertEqual(response.get_json()["status"], "Completed")
+
+    def test_tally_filters_results_by_event(self):
+        auth = accredit(self.client)
+        token = auth.get_json()["token"]
+        vote(self.client, token, "yes")
+
+        active = self.client.get("/tally?event_id=diaspora-referendum-2026")
+        upcoming = self.client.get("/tally?event_id=overseas-voter-education-poll")
+        closed = self.client.get("/tally?event_id=secure-ballot-audit-drill")
+
+        self.assertEqual(active.status_code, 200)
+        self.assertEqual(active.get_json()["yes"], 1)
+        self.assertEqual(active.get_json()["total"], 1)
+        self.assertEqual(upcoming.status_code, 200)
+        self.assertEqual(upcoming.get_json()["total"], 0)
+        self.assertEqual(upcoming.get_json()["status"], "Coming Soon")
+        self.assertEqual(closed.status_code, 200)
+        self.assertEqual(closed.get_json()["yes"], 31)
+        self.assertEqual(closed.get_json()["no"], 17)
+        self.assertEqual(closed.get_json()["total_ballots_cast"], 48)
+        self.assertEqual(closed.get_json()["status"], "Completed")
 
 
 if __name__ == "__main__":

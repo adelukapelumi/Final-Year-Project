@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import PublicBoard from "./pages/PublicBoard";
 import Receipt from "./pages/Receipt";
 import Tally from "./pages/Tally";
+import { hasVoteableSelectedEvent } from "./routing";
 
 const SESSION_KEY = "diaspora-vote-session";
 const RECEIPT_KEY = "diaspora-vote-receipt";
@@ -78,7 +79,8 @@ export default function App() {
       ...currentSession,
       biometricVerified: true,
       capturedImage,
-      detectionMode
+      detectionMode,
+      selectedEvent: null
     }));
     navigate("/dashboard");
   }
@@ -91,6 +93,15 @@ export default function App() {
     navigate("/receipt");
   }
 
+  function handleSelectEvent(event) {
+    setSession((currentSession) => ({
+      ...currentSession,
+      selectedEvent: event
+    }));
+    setReceipt(null);
+    navigate("/ballot");
+  }
+
   function handleEndSession() {
     setSession(null);
     setReceipt(null);
@@ -101,9 +112,11 @@ export default function App() {
 
   const isAuthenticated = Boolean(session?.token);
   const isAccredited = isAuthenticated && Boolean(session?.biometricVerified);
+  const hasSelectedEvent = hasVoteableSelectedEvent(session);
   const onboardingRedirect = isAccredited ? "/dashboard" : "/camera";
   const hasCurrentReceipt =
     Boolean(receipt) &&
+    Boolean(receipt?.eventId) &&
     Boolean(session?.sessionInstanceId) &&
     receipt?.sessionInstanceId === session.sessionInstanceId;
 
@@ -149,7 +162,11 @@ export default function App() {
           path="/dashboard"
           element={
             isAccredited ? (
-              <Dashboard session={session} onEndSession={handleEndSession} />
+              <Dashboard
+                session={session}
+                onEndSession={handleEndSession}
+                onSelectEvent={handleSelectEvent}
+              />
             ) : (
               <Navigate to={isAuthenticated ? "/camera" : "/login"} replace />
             )
@@ -166,8 +183,10 @@ export default function App() {
         <Route
           path="/ballot"
           element={
-            isAccredited && session?.eligibilityConfirmed ? (
+            isAccredited && session?.eligibilityConfirmed && hasSelectedEvent ? (
               <Ballot session={session} onReceiptReady={handleReceipt} />
+            ) : isAccredited ? (
+              <Navigate to="/dashboard" replace />
             ) : isAuthenticated ? (
               <Navigate to="/camera" replace />
             ) : (

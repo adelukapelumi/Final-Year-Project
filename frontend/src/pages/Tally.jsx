@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Icon from "../components/Icon";
-import { fetchTally } from "../api";
+import { fetchEvents, fetchTally } from "../api";
+import { ACTIVE_EVENT_ID, FALLBACK_EVENTS } from "../events";
 
 function MetricCard({ label, value, icon, tone }) {
   return (
@@ -15,10 +16,33 @@ function MetricCard({ label, value, icon, tone }) {
 }
 
 export default function Tally() {
+  const [events, setEvents] = useState(FALLBACK_EVENTS);
+  const [selectedEventId, setSelectedEventId] = useState(ACTIVE_EVENT_ID);
   const [tally, setTally] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchEvents()
+      .then((result) => {
+        if (!cancelled) {
+          setEvents(result.events || []);
+          setSelectedEventId(result.active_event_id || ACTIVE_EVENT_ID);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEvents(FALLBACK_EVENTS);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +52,7 @@ export default function Tally() {
       setError("");
 
       try {
-        const result = await fetchTally();
+        const result = await fetchTally(selectedEventId);
         if (!cancelled) {
           setTally(result);
         }
@@ -47,10 +71,19 @@ export default function Tally() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, selectedEventId]);
 
   const yesPercent = tally?.total ? Math.round((tally.yes / tally.total) * 100) : 0;
   const noPercent = tally?.total ? 100 - yesPercent : 0;
+  const selectedEvent = events.find((event) => event.event_id === selectedEventId) || tally?.event;
+  const statusDetail =
+    tally?.status === "Completed"
+      ? "Voting for this event has concluded and the published totals below are final."
+      : tally?.status === "Coming Soon"
+        ? "This event has not opened yet, so no ballots have been cast."
+        : tally?.status === "Active"
+          ? "Mock accreditation remains open for eligible voters."
+          : `This demonstration event is ${String(tally?.status || "").toLowerCase()}.`;
 
   return (
     <section className="page">
@@ -66,6 +99,23 @@ export default function Tally() {
         </button>
       </div>
 
+      <div className="event-filter-bar">
+        <div>
+          <span className="section-kicker">Event results</span>
+          <strong>{selectedEvent?.title || FALLBACK_EVENTS[0].title}</strong>
+        </div>
+        <label className="event-select">
+          <span>Referendum event</span>
+          <select value={selectedEventId} onChange={(event) => setSelectedEventId(event.target.value)}>
+            {events.map((event) => (
+              <option key={event.event_id} value={event.event_id}>
+                {event.title}{event.status ? ` - ${event.status}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       {loading ? (
         <div className="dashboard-loading"><span className="spinner" /><strong>Loading referendum tally...</strong></div>
       ) : null}
@@ -79,17 +129,13 @@ export default function Tally() {
         <>
           <div className="metric-grid">
             <MetricCard label="Total Registered Voters" value={tally.total_registered_voters} icon="user" tone="navy" />
-            <MetricCard label="Total Ballots Cast" value={tally.total_ballots_cast} icon="ballot" tone="mint" />
+            <MetricCard label="Event Ballots Cast" value={tally.total_ballots_cast} icon="ballot" tone="mint" />
             <MetricCard label="Remaining Voters" value={tally.remaining_voters} icon="clock" tone="gold" />
             <div className="metric-card metric-card--status">
               <div>
-                <span>Election Status</span>
+                <span>Event Status</span>
                 <strong>{tally.status}</strong>
-                <small>
-                  {tally.status === "Completed"
-                    ? "All registered mock voters have cast ballots."
-                    : "Mock accreditation remains open for eligible voters."}
-                </small>
+                <small>{statusDetail}</small>
               </div>
               <span className="metric-card__icon"><Icon name="clock" size={22} /></span>
             </div>
@@ -98,7 +144,7 @@ export default function Tally() {
           <div className="tally-grid">
             <div className="result-card">
               <div className="result-card__header">
-                <div><span className="section-kicker">Current result</span><h2>Vote Distribution</h2></div>
+                <div><span className="section-kicker">Current result</span><h2>{selectedEvent?.title}</h2></div>
                 <span className="status-badge status-badge--neutral">Aggregate only</span>
               </div>
               <div className="result-bars">

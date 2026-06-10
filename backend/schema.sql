@@ -15,11 +15,13 @@ CREATE TABLE IF NOT EXISTS voters (
 CREATE TABLE IF NOT EXISTS ballots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ballot_id TEXT NOT NULL UNIQUE,
-    voter_id INTEGER NOT NULL UNIQUE,
+    voter_id INTEGER NOT NULL,
+    event_id TEXT NOT NULL DEFAULT 'diaspora-referendum-2026',
     encrypted_vote TEXT NOT NULL,
     proof_hash TEXT NOT NULL,
     proof_path TEXT NOT NULL,
     public_inputs TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (voter_id) REFERENCES voters(id) ON DELETE CASCADE
+    FOREIGN KEY (voter_id) REFERENCES voters(id) ON DELETE CASCADE,
+    UNIQUE (voter_id, event_id)
 );

@@ -7,6 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/register": "http://127.0.0.1:5000",
+      "/events": "http://127.0.0.1:5000",
       "/login": "http://127.0.0.1:5000",
       "/biometric-verify": "http://127.0.0.1:5000",
       "/vote": "http://127.0.0.1:5000",

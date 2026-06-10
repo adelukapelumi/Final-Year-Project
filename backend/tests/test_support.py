@@ -92,5 +92,8 @@ def accredit(client, nin: str = "12345678901", probe_id: str = "diaspora-face-ma
     return auth
 
 
-def vote(client, token: str, vote_value="yes"):
-    return client.post("/vote", json={"token": token, "vote": vote_value})
+def vote(client, token: str, vote_value="yes", event_id="diaspora-referendum-2026"):
+    return client.post(
+        "/vote",
+        json={"token": token, "vote": vote_value, "event_id": event_id},
+    )

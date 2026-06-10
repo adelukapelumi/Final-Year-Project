@@ -66,6 +66,8 @@ export default function Receipt({ receipt }) {
         </div>
 
         <div className="receipt-data">
+          <ReceiptRow label="Referendum event" value={receipt.eventTitle} />
+          <ReceiptRow code label="Event ID" value={receipt.eventId} />
           <ReceiptRow
             code
             label="Ballot ID"
