@@ -27,6 +27,7 @@ class HealthTests(unittest.TestCase):
         temp_path = Path(self.temp_dir.name)
         binary_path = temp_path / "referendum_acceptance_winterfell.exe"
         binary_path.write_text("test-binary", encoding="utf-8")
+        binary_path.chmod(0o755)
         app = create_test_app(temp_path, {"PROOF_BINARY_PATH": binary_path})
         client = app.test_client()
 

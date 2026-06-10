@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from db import get_db
 from test_support import accredit, admin_headers, create_test_app, vote
+from db import get_db
 
 
 class AdminTests(unittest.TestCase):
