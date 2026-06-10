@@ -4,70 +4,85 @@ import Icon from "../components/Icon";
 const safeguards = [
   {
     icon: "user",
-    title: "Eligibility first",
-    text: "Accreditation confirms access before a referendum ballot is shown."
+    title: "Accredit",
+    text: "Confirm eligibility with an 11-digit mock NIN and a camera-based face-presence check."
   },
   {
-    icon: "lock",
-    title: "Private by design",
-    text: "Your public receipt contains proof metadata, never your identity or vote."
+    icon: "ballot",
+    title: "Vote",
+    text: "Cast one private Yes or No ballot in the active diaspora referendum."
   },
   {
     icon: "shield",
-    title: "Cryptographic assurance",
-    text: "Each submitted ballot is paired with a verifiable zk-STARK proof receipt."
+    title: "Verify",
+    text: "Use public proof metadata to verify inclusion without revealing identity or choice."
   }
 ];
 
 export default function Home() {
   return (
-    <section className="page landing-page">
+    <section className="page landing-page template-landing">
       <div className="landing-hero">
         <div className="landing-hero__content">
           <div className="eyebrow">
             <span className="eyebrow__dot" />
             Secure civic participation abroad
           </div>
-          <h1>Your voice, verified.<br />Wherever you are.</h1>
+          <h1>One referendum.<br />Every eligible voice.</h1>
           <p>
-            Secure binary referendum portal for eligible Nigerians abroad.
-            Accredit, cast your ballot, and verify its proof without exposing your choice.
+            DiasporaVote is a secure binary referendum portal for eligible Nigerians abroad.
+            Complete prototype accreditation, vote privately, and verify the public proof receipt.
           </p>
           <div className="actions">
-            <Link className="button button--gold" to="/login">
-              Verify Eligibility
+            <Link className="button button--primary" to="/login">
+              Start Accreditation
               <Icon name="arrow" size={18} />
             </Link>
-            <Link className="button button--light" to="/board">
+            <Link className="button button--outline" to="/board">
               View Public Board
             </Link>
           </div>
           <div className="trust-row">
-            <span><Icon name="shield" size={17} /> Zero-knowledge verified</span>
-            <span><Icon name="globe" size={17} /> Built for the diaspora</span>
+            <span><Icon name="shield" size={17} /> Zero-knowledge proof receipts</span>
+            <span><Icon name="globe" size={17} /> Built for Nigerians abroad</span>
           </div>
         </div>
 
-        <div className="referendum-preview" aria-label="Referendum overview">
-          <div className="preview-orbit preview-orbit--one" />
-          <div className="preview-orbit preview-orbit--two" />
-          <div className="preview-card">
-            <div className="preview-card__header">
-              <span className="status-badge status-badge--neutral">Binary Referendum</span>
-              <Icon name="shield" size={24} />
+        <div className="vote-illustration" aria-label="Illustration of secure online referendum voting">
+          <span className="vote-illustration__halo" />
+          <div className="vote-device">
+            <div className="vote-device__speaker" />
+            <div className="vote-device__screen">
+              <span className="status-badge status-badge--success">Active</span>
+              <Icon name="ballot" size={40} />
+              <strong>REFERENDUM</strong>
+              <div><span>YES</span><span>NO</span></div>
             </div>
-            <div className="preview-card__number">01</div>
-            <p>Should secure diaspora voting be enabled for eligible Nigerians abroad?</p>
-            <div className="preview-card__options">
-              <span><i /> Yes</span>
-              <span><i /> No</span>
-            </div>
-            <div className="preview-card__footer">
-              <Icon name="lock" size={16} />
-              Ballot choices remain encrypted
-            </div>
+            <span className="vote-device__button" />
           </div>
+          <div className="illustration-person illustration-person--left">
+            <span className="person-head" />
+            <span className="person-body" />
+            <span className="person-arm" />
+          </div>
+          <div className="illustration-person illustration-person--right">
+            <span className="person-head" />
+            <span className="person-body" />
+            <span className="person-arm" />
+          </div>
+          <span className="illustration-check"><Icon name="check" size={24} /></span>
         </div>
+      </div>
+
+      <div className="landing-intro">
+        <div>
+          <span className="section-kicker">Simple, secure, auditable</span>
+          <h2>A clear path from accreditation to public verification.</h2>
+        </div>
+        <p>
+          The prototype keeps voter identity, session credentials, and ballot choice away from
+          the public board while preserving a verifiable proof receipt.
+        </p>
       </div>
 
       <div className="safeguard-grid">

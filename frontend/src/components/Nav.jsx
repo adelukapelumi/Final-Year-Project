@@ -2,11 +2,10 @@ import { NavLink } from "react-router-dom";
 import Icon from "./Icon";
 
 const items = [
-  { to: "/", label: "Overview", icon: "home" },
-  { to: "/login", label: "Voter Accreditation", icon: "user" },
+  { to: "/dashboard", label: "Election Events", icon: "home" },
   { to: "/ballot", label: "Referendum Ballot", icon: "ballot" },
   { to: "/receipt", label: "Vote Receipt", icon: "receipt" },
-  { to: "/board", label: "Public Verification", icon: "board" },
+  { to: "/board", label: "Public Board", icon: "board" },
   { to: "/tally", label: "Tally Dashboard", icon: "tally" }
 ];
 
@@ -18,7 +17,7 @@ export default function Nav({ currentPath, isAuthenticated, onLogout }) {
         const active =
           currentPath === item.to ||
           (item.to === "/ballot" &&
-            (currentPath === "/eligibility" || currentPath === "/biometric-verify"));
+            (currentPath === "/camera" || currentPath === "/biometric-verify"));
         return (
           <NavLink className={active ? "is-active" : ""} key={item.to} to={item.to}>
             <Icon name={item.icon} size={19} />

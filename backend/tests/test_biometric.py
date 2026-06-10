@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_support import biometric_verify, create_test_app, register, vote
+from test_support import biometric_verify, camera_verify, create_test_app, register, vote
 
 
 class BiometricVerificationTests(unittest.TestCase):
@@ -15,6 +15,28 @@ class BiometricVerificationTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp_dir.cleanup()
+
+    def test_camera_capture_verification_succeeds_without_receiving_an_image(self):
+        auth = register(self.client)
+        token = auth.get_json()["token"]
+
+        response = camera_verify(self.client, token)
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertTrue(body["verified"])
+        self.assertEqual(body["verification_mode"], "Camera-based prototype face verification")
+        self.assertNotIn("image", body)
+        self.assertNotIn("frame", body)
+
+    def test_camera_capture_confirmation_is_required(self):
+        auth = register(self.client)
+        token = auth.get_json()["token"]
+
+        response = self.client.post("/biometric-verify", json={"token": token})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "camera capture confirmation is required")
 
     def test_biometric_verification_succeeds_with_mock_probe(self):
         auth = register(self.client)
@@ -33,7 +55,7 @@ class BiometricVerificationTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(response.get_json()["verified"])
-        self.assertEqual(response.get_json()["error"], "mock facial verification failed")
+        self.assertEqual(response.get_json()["error"], "camera-based prototype verification failed")
 
     def test_biometric_verification_cannot_run_after_vote_is_cast(self):
         auth = register(self.client)

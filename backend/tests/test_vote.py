@@ -26,15 +26,9 @@ class VoteTests(unittest.TestCase):
         body = response.get_json()
         self.assertTrue(body["ballot_id"])
         self.assertEqual(len(body["proof_hash"]), 64)
-        self.assertEqual(
-            body["public_inputs"],
-            {
-                "vote_value": 1,
-                "registered_flag": 1,
-                "already_voted_flag": 0,
-                "accepted": 1,
-            },
-        )
+        self.assertNotIn("proof_path", body)
+        self.assertNotIn("public_inputs", body)
+        self.assertNotIn("vote", body)
 
     def test_duplicate_vote_rejected(self):
         auth = accredit(self.client)

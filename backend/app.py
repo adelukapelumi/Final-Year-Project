@@ -59,7 +59,7 @@ def create_app(test_config: dict | None = None) -> Flask:
             jsonify(
                 {
                     "token": result["token"],
-                    "nin_hash": result["nin_hash"],
+                    "profile": result["profile"],
                     "biometric": result["biometric"],
                     "fallback_message": PROTOTYPE_FALLBACK_MESSAGE,
                 }
@@ -81,17 +81,22 @@ def create_app(test_config: dict | None = None) -> Flask:
         if voter["has_voted"]:
             return jsonify({"error": "voter has already cast a ballot"}), 409
 
-        probe_id = str(payload.get("probe_id") or "").strip()
-        if not probe_id:
-            return jsonify({"error": "probe_id is required"}), 400
-
         registry = MockNINRegistry(app.config["NIN_REGISTRY_PATH"])
-        result = registry.verify_face_probe(voter["nin_hash"], probe_id)
+        camera_capture = payload.get("camera_capture") is True
+        probe_id = str(payload.get("probe_id") or "").strip()
+        if camera_capture:
+            result = registry.verify_camera_capture(voter["nin_hash"])
+        elif probe_id:
+            # Kept for backend compatibility; the public UI only uses camera capture.
+            result = registry.verify_face_probe(voter["nin_hash"], probe_id)
+        else:
+            return jsonify({"error": "camera capture confirmation is required"}), 400
+
         if not result["verified"]:
             return (
                 jsonify(
                     {
-                        "error": "mock facial verification failed",
+                        "error": "camera-based prototype verification failed",
                         "verified": False,
                         "fallback_message": result["fallback_message"],
                     }
@@ -115,7 +120,6 @@ def create_app(test_config: dict | None = None) -> Flask:
                 {
                     "verified": True,
                     "verification_mode": result["verification_mode"],
-                    "development_profile_label": result["development_profile_label"],
                     "fallback_message": result["fallback_message"],
                 }
             ),
@@ -178,8 +182,6 @@ def create_app(test_config: dict | None = None) -> Flask:
                 {
                     "ballot_id": ballot_id,
                     "proof_hash": proof_result["proof_hash"],
-                    "proof_path": proof_result["proof_path"],
-                    "public_inputs": proof_result["public_inputs"],
                 }
             ),
             201,

@@ -22,11 +22,16 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.get_json()
         self.assertTrue(body["token"])
-        self.assertEqual(len(body["nin_hash"]), 64)
-        self.assertEqual(body["biometric"]["verification_mode"], "BVAS-inspired prototype verification")
+        self.assertNotIn("nin_hash", body)
+        self.assertEqual(body["profile"]["display_name"], "Amara Okafor")
+        self.assertEqual(body["profile"]["diaspora_location"], "London, United Kingdom")
+        self.assertEqual(body["profile"]["voter_category"], "Eligible Diaspora Voter")
+        self.assertEqual(body["biometric"]["verification_mode"], "Camera-based prototype face verification")
+        self.assertNotIn("available_probes", body["biometric"])
+        self.assertNotIn("recommended_probe_id", body["biometric"])
         self.assertEqual(
             body["fallback_message"],
-            "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems.",
+            "This prototype verifies face presence for demonstration only and does not connect to live INEC, BVAS, or NIMC systems.",
         )
 
     def test_invalid_nin_is_rejected(self):

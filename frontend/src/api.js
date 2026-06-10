@@ -57,13 +57,16 @@ export function authenticate(nin, mode) {
   });
 }
 
-export function runBiometricVerification(token, probeId) {
+export function verifyCameraCapture(token, detectionMode) {
   return request("/biometric-verify", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ probe_id: probeId })
+    body: JSON.stringify({
+      camera_capture: true,
+      detection_mode: detectionMode
+    })
   });
 }
 

@@ -34,6 +34,8 @@ class BoardTests(unittest.TestCase):
         self.assertNotIn("token", board_ballot)
         self.assertNotIn("vote", board_ballot)
         self.assertNotIn("encrypted_vote", board_ballot)
+        self.assertNotIn("proof_path", board_ballot)
+        self.assertNotIn("public_inputs", board_ballot)
         self.assertNotIn("biometric_verified", board_ballot)
         self.assertNotIn("face_template_id", board_ballot)
 

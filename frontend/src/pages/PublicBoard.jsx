@@ -278,14 +278,14 @@ export default function PublicBoard() {
                 <span>Ballot ID</span>
                 <span>Proof Hash</span>
                 <span>Timestamp</span>
-                <span>Action</span>
+                <span>Verification result</span>
               </div>
               {visibleBallots.map((ballot) => (
                 <div className="board-table__row" key={ballot.ballot_id}>
                   <div data-label="Ballot ID"><code>{ballot.ballot_id}</code></div>
                   <div data-label="Proof Hash"><code>{ballot.proof_hash}</code></div>
                   <div data-label="Timestamp"><span>{ballot.timestamp}</span></div>
-                  <div data-label="Action" className="board-table__actions">
+                  <div data-label="Verification result" className="board-table__actions">
                     <button
                       className="button button--outline button--small"
                       type="button"
@@ -293,7 +293,11 @@ export default function PublicBoard() {
                       onClick={() => runVerification(ballot.ballot_id, ballot.proof_hash)}
                     >
                       <Icon name={verifyingBallotId === ballot.ballot_id ? "clock" : "shield"} size={15} />
-                      {verifyingBallotId === ballot.ballot_id ? "Verifying..." : "Verify Proof"}
+                      {verifyingBallotId === ballot.ballot_id
+                        ? "Verifying..."
+                        : verificationResult?.ballotId === ballot.ballot_id && verificationResult.success
+                          ? "Verified"
+                          : "Verify Proof"}
                     </button>
                   </div>
                 </div>

@@ -23,6 +23,9 @@ def create_test_app(tmp_path: Path):
                 "registered_voters": [
                     {
                         "nin": "12345678901",
+                        "display_name": "Amara Okafor",
+                        "diaspora_location": "London, United Kingdom",
+                        "voter_category": "Eligible Diaspora Voter",
                         "biometric": {
                             "face_template_id": "tmpl-001",
                             "accepted_probe_id": "diaspora-face-match",
@@ -31,6 +34,9 @@ def create_test_app(tmp_path: Path):
                     },
                     {
                         "nin": "23456789012",
+                        "display_name": "Tunde Balogun",
+                        "diaspora_location": "Toronto, Canada",
+                        "voter_category": "Eligible Diaspora Voter",
                         "biometric": {
                             "face_template_id": "tmpl-002",
                             "accepted_probe_id": "diaspora-face-match",
@@ -39,6 +45,9 @@ def create_test_app(tmp_path: Path):
                     },
                     {
                         "nin": "34567890123",
+                        "display_name": "Zainab Musa",
+                        "diaspora_location": "Atlanta, United States",
+                        "voter_category": "Eligible Diaspora Voter",
                         "biometric": {
                             "face_template_id": "tmpl-003",
                             "accepted_probe_id": "diaspora-face-match",
@@ -72,10 +81,14 @@ def biometric_verify(client, token: str, probe_id: str = "diaspora-face-match"):
     return client.post("/biometric-verify", json={"token": token, "probe_id": probe_id})
 
 
+def camera_verify(client, token: str):
+    return client.post("/biometric-verify", json={"token": token, "camera_capture": True})
+
+
 def accredit(client, nin: str = "12345678901", probe_id: str = "diaspora-face-match"):
     auth = register(client, nin)
     token = auth.get_json()["token"]
-    biometric_verify(client, token, probe_id)
+    camera_verify(client, token)
     return auth
 
 

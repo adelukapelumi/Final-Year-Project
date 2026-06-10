@@ -11,6 +11,12 @@ const paths = {
       <path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" />
     </>
   ),
+  camera: (
+    <>
+      <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
   check: <path d="m5 12 4 4L19 6" />,
   chevron: <path d="m9 18 6-6-6-6" />,
   clock: (
@@ -42,6 +48,12 @@ const paths = {
     <>
       <rect x="5" y="10" width="14" height="10" rx="2" />
       <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2" />
+    </>
+  ),
+  map: (
+    <>
+      <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z" />
+      <circle cx="12" cy="10" r="2" />
     </>
   ),
   logout: (

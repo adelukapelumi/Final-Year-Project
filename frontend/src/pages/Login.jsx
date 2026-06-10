@@ -7,7 +7,8 @@ export default function Login({ session, onAuthenticated }) {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit() {
+  async function handleSubmit(event) {
+    event?.preventDefault();
     setIsBusy(true);
     setError("");
 
@@ -15,13 +16,14 @@ export default function Login({ session, onAuthenticated }) {
       const result = await authenticate(nin, "login");
       onAuthenticated({
         token: result.token,
-        ninHash: result.nin_hash,
+        profile: {
+          displayName: result.profile?.display_name,
+          diasporaLocation: result.profile?.diaspora_location,
+          voterCategory: result.profile?.voter_category
+        },
         biometric: {
           verificationMode: result.biometric?.verification_mode,
-          developmentProfileLabel: result.biometric?.development_profile_label,
-          recommendedProbeId: result.biometric?.recommended_probe_id,
-          availableProbes: result.biometric?.available_probes || [],
-          fallbackMessage: result.biometric?.fallback_message,
+          fallbackMessage: result.biometric?.fallback_message
         },
         fallbackMessage: result.fallback_message
       });
@@ -33,48 +35,38 @@ export default function Login({ session, onAuthenticated }) {
   }
 
   return (
-    <section className="page auth-page">
+    <section className="page auth-page accreditation-page">
       <div className="auth-panel auth-panel--intro">
         <div>
-          <span className="section-kicker section-kicker--light">Voter Accreditation</span>
-          <h1>Voter accreditation that protects your identity.</h1>
+          <span className="section-kicker section-kicker--light">DiasporaVote accreditation</span>
+          <h1>Your secure entry to the referendum.</h1>
           <p>
-            Confirm your eligibility through the existing secure voter endpoint.
-            Your identity credential is never published with your ballot.
+            Verify that your mock voter record is eligible, then complete camera-based
+            prototype face verification before the ballot is unlocked.
           </p>
         </div>
 
-        <div className="auth-assurances">
-          <div>
-            <span><Icon name="shield" /></span>
-            <p><strong>Private session</strong>Your credential remains separate from your vote.</p>
-          </div>
-          <div>
-            <span><Icon name="lock" /></span>
-            <p><strong>Encrypted ballot</strong>Your selection is protected before publication.</p>
-          </div>
-          <div>
-            <span><Icon name="receipt" /></span>
-            <p><strong>Verifiable receipt</strong>Receive public proof metadata after submission.</p>
-          </div>
+        <div className="accreditation-steps">
+          <div className="is-current"><span>01</span><p><strong>Verify eligibility</strong>11-digit mock NIN check</p></div>
+          <div><span>02</span><p><strong>Scan face</strong>Camera presence verification</p></div>
+          <div><span>03</span><p><strong>Open dashboard</strong>Review the active event</p></div>
         </div>
 
         <div className="auth-panel__foot">
-          <Icon name="globe" size={18} />
-          Designed for eligible Nigerians abroad
+          <Icon name="shield" size={18} />
+          Identity details are never displayed on the public board
         </div>
       </div>
 
       <div className="auth-panel auth-panel--form">
-        <div className="auth-form">
-          <span className="section-kicker">Step 1 of 6</span>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="auth-form__mark"><Icon name="user" size={24} /></div>
+          <span className="section-kicker">Step 1 of 3</span>
           <h2>Voter Accreditation</h2>
-          <p className="muted">
-            Enter your prototype National Identification Number to begin.
-          </p>
+          <p className="muted">Enter your configured 11-digit mock NIN to verify eligibility.</p>
 
           <div className="field">
-            <label htmlFor="nin">National Identification Number</label>
+            <label htmlFor="nin">Mock National Identification Number</label>
             <div className="input-wrap">
               <Icon name="user" size={19} />
               <input
@@ -85,52 +77,44 @@ export default function Login({ session, onAuthenticated }) {
                 placeholder="Enter 11-digit mock NIN"
                 value={nin}
                 onChange={(event) => setNin(event.target.value.replace(/\D/g, ""))}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !isBusy) {
-                    handleSubmit();
-                  }
-                }}
               />
             </div>
-            <small>Prototype credential only. Use a configured development NIN.</small>
+            <small>Prototype credential only. No live NIMC or NIN API is used.</small>
           </div>
 
           <div className="privacy-note">
             <Icon name="shield" size={22} />
             <div>
-              <strong>BVAS-inspired prototype flow</strong>
-              <span>
-                This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems.
-              </span>
+              <strong>Private accreditation session</strong>
+              <span>Your NIN and its hash are not shown in the voter dashboard or public records.</span>
             </div>
           </div>
 
           {error ? (
             <div className="status status--error">
-              <strong>Connection or accreditation error</strong>
+              <strong>Accreditation error</strong>
               <span>{error}</span>
             </div>
           ) : null}
 
           <button
-            type="button"
+            type="submit"
             className="button button--primary button--wide"
             disabled={isBusy || nin.length !== 11}
-            onClick={handleSubmit}
           >
-            {isBusy ? "Accredit & Continue..." : "Accredit & Continue"}
+            {isBusy ? "Verifying Eligibility..." : "Verify Eligibility"}
             {!isBusy ? <Icon name="arrow" size={18} /> : <span className="spinner spinner--small" />}
           </button>
 
           {session?.token ? (
             <div className="status status--success">
               <Icon name="check" size={18} />
-              <span>An authenticated session is already available.</span>
+              <span>An active accreditation session is available.</span>
             </div>
           ) : null}
 
-          <p className="form-security"><Icon name="lock" size={14} /> Secured session transport</p>
-        </div>
+          <p className="form-security"><Icon name="lock" size={14} /> Encrypted session transport</p>
+        </form>
       </div>
     </section>
   );

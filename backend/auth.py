@@ -81,6 +81,7 @@ def register_or_login(nin: str) -> dict:
         "token": token,
         "voter_id": voter_id,
         "nin_hash": nin_hash,
+        "profile": registry.public_profile(nin_hash),
         "biometric": registry.biometric_prompt(nin_hash),
     }
 

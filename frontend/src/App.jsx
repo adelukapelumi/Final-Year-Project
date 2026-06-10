@@ -3,7 +3,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-
 import Layout from "./components/Layout";
 import Ballot from "./pages/Ballot";
 import BiometricVerification from "./pages/BiometricVerification";
-import Eligibility from "./pages/Eligibility";
+import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import PublicBoard from "./pages/PublicBoard";
@@ -52,26 +52,21 @@ export default function App() {
   function handleAuthenticated(nextSession) {
     setSession({
       ...nextSession,
-      eligibilityConfirmed: false,
+      eligibilityConfirmed: true,
       biometricVerified: false
     });
-    navigate("/eligibility");
+    setReceipt(null);
+    navigate("/camera");
   }
 
-  function handleEligibilityConfirmed() {
+  function handleBiometricVerified({ capturedImage, detectionMode }) {
     setSession((currentSession) => ({
       ...currentSession,
-      eligibilityConfirmed: true
+      biometricVerified: true,
+      capturedImage,
+      detectionMode
     }));
-    navigate("/biometric-verify");
-  }
-
-  function handleBiometricVerified() {
-    setSession((currentSession) => ({
-      ...currentSession,
-      biometricVerified: true
-    }));
-    navigate("/ballot");
+    navigate("/dashboard");
   }
 
   function handleReceipt(nextReceipt) {
@@ -92,6 +87,7 @@ export default function App() {
       isAuthenticated={isAuthenticated}
       currentPath={location.pathname}
       onLogout={handleLogout}
+      session={session}
     >
       <Routes>
         <Route path="/" element={<Home />} />
@@ -105,34 +101,34 @@ export default function App() {
           }
         />
         <Route
-          path="/eligibility"
+          path="/camera"
           element={
             isAuthenticated ? (
-              <Eligibility session={session} onConfirmed={handleEligibilityConfirmed} />
+              <BiometricVerification session={session} onVerified={handleBiometricVerified} />
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
         <Route
-          path="/biometric-verify"
+          path="/dashboard"
           element={
-            isAuthenticated && session?.eligibilityConfirmed ? (
-              <BiometricVerification session={session} onVerified={handleBiometricVerified} />
-            ) : isAuthenticated ? (
-              <Navigate to="/eligibility" replace />
+            isAuthenticated && session?.biometricVerified ? (
+              <Dashboard session={session} />
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to={isAuthenticated ? "/camera" : "/login"} replace />
             )
           }
         />
+        <Route path="/eligibility" element={<Navigate to={isAuthenticated ? "/camera" : "/login"} replace />} />
+        <Route path="/biometric-verify" element={<Navigate to={isAuthenticated ? "/camera" : "/login"} replace />} />
         <Route
           path="/ballot"
           element={
             isAuthenticated && session?.eligibilityConfirmed && session?.biometricVerified ? (
               <Ballot session={session} onReceiptReady={handleReceipt} />
             ) : isAuthenticated ? (
-              <Navigate to={session?.eligibilityConfirmed ? "/biometric-verify" : "/eligibility"} replace />
+              <Navigate to="/camera" replace />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -141,10 +137,10 @@ export default function App() {
         <Route
           path="/receipt"
           element={
-            isAuthenticated ? (
+            isAuthenticated && session?.biometricVerified ? (
               <Receipt receipt={receipt} />
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to={isAuthenticated ? "/camera" : "/login"} replace />
             )
           }
         />

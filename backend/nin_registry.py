@@ -7,7 +7,7 @@ from crypto_utils import hash_nin
 
 
 PROTOTYPE_FALLBACK_MESSAGE = (
-    "This prototype simulates biometric accreditation and does not connect to live INEC or NIMC systems."
+    "This prototype verifies face presence for demonstration only and does not connect to live INEC, BVAS, or NIMC systems."
 )
 
 DEFAULT_PROBE_CATALOG = {
@@ -47,6 +47,11 @@ class MockNINRegistry:
             biometric = item.get("biometric") or {}
             records[nin_hash] = {
                 "nin_hash": nin_hash,
+                "profile": {
+                    "display_name": item.get("display_name", "Prototype Diaspora Voter"),
+                    "diaspora_location": item.get("diaspora_location", "Diaspora"),
+                    "voter_category": item.get("voter_category", "Eligible Diaspora Voter"),
+                },
                 "biometric": {
                     "face_template_id": biometric.get("face_template_id", ""),
                     "accepted_probe_id": biometric.get("accepted_probe_id", "diaspora-face-match"),
@@ -54,7 +59,7 @@ class MockNINRegistry:
                         "development_profile_label", "Diaspora kiosk prototype sample"
                     ),
                     "verification_mode": biometric.get(
-                        "verification_mode", "BVAS-inspired prototype verification"
+                        "verification_mode", "Camera-based prototype face verification"
                     ),
                     "available_probes": self._resolve_available_probes(
                         biometric.get("available_probe_ids") or ["diaspora-face-match", "diaspora-face-alt", "diaspora-face-retry"]
@@ -87,9 +92,24 @@ class MockNINRegistry:
         return {
             "status": "pending",
             "verification_mode": biometric["verification_mode"],
-            "development_profile_label": biometric["development_profile_label"],
-            "recommended_probe_id": biometric["accepted_probe_id"],
-            "available_probes": biometric["available_probes"],
+            "fallback_message": biometric["fallback_message"],
+        }
+
+    def public_profile(self, nin_hash: str) -> dict:
+        record = self.get_record(nin_hash)
+        if record is None:
+            raise KeyError("mock voter record not found")
+        return dict(record["profile"])
+
+    def verify_camera_capture(self, nin_hash: str) -> dict:
+        record = self.get_record(nin_hash)
+        if record is None:
+            raise PermissionError("nin is not registered")
+
+        biometric = record["biometric"]
+        return {
+            "verified": bool(biometric["face_template_id"]),
+            "verification_mode": "Camera-based prototype face verification",
             "fallback_message": biometric["fallback_message"],
         }
 
