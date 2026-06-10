@@ -23,7 +23,7 @@ function frameHasVisualData(context, width, height) {
   return mean > 8 && variance > 20;
 }
 
-export default function BiometricVerification({ session, onVerified }) {
+export default function BiometricVerification({ session, onEndSession, onVerified }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -138,6 +138,14 @@ export default function BiometricVerification({ session, onVerified }) {
           <Icon name="shield" size={20} />
           <span>{DISCLAIMER}</span>
         </div>
+        <div className="active-session-notice">
+          <strong>An accredited voter session is already active.</strong>
+          <span>End the current session before accrediting another voter.</span>
+          <button className="button button--light button--small" type="button" onClick={onEndSession}>
+            <Icon name="logout" size={16} />
+            End Session
+          </button>
+        </div>
       </div>
 
       <div className="camera-workspace">
@@ -214,6 +222,9 @@ export default function BiometricVerification({ session, onVerified }) {
               <Icon name="arrow" size={18} />
             </button>
           ) : null}
+          <button className="text-button camera-end-session" type="button" onClick={onEndSession}>
+            End Session
+          </button>
         </div>
       </div>
     </section>

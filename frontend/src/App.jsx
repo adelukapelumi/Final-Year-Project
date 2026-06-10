@@ -27,10 +27,23 @@ function readStoredJson(key) {
   }
 }
 
+function createSessionInstanceId() {
+  return window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [session, setSession] = useState(() => readStoredJson(SESSION_KEY));
+  const [session, setSession] = useState(() => {
+    const storedSession = readStoredJson(SESSION_KEY);
+    if (storedSession?.token && !storedSession.sessionInstanceId) {
+      return {
+        ...storedSession,
+        sessionInstanceId: createSessionInstanceId()
+      };
+    }
+    return storedSession;
+  });
   const [receipt, setReceipt] = useState(() => readStoredJson(RECEIPT_KEY));
 
   useEffect(() => {
@@ -52,6 +65,7 @@ export default function App() {
   function handleAuthenticated(nextSession) {
     setSession({
       ...nextSession,
+      sessionInstanceId: createSessionInstanceId(),
       eligibilityConfirmed: true,
       biometricVerified: false
     });
@@ -70,41 +84,62 @@ export default function App() {
   }
 
   function handleReceipt(nextReceipt) {
-    setReceipt(nextReceipt);
+    setReceipt({
+      ...nextReceipt,
+      sessionInstanceId: session.sessionInstanceId
+    });
     navigate("/receipt");
   }
 
-  function handleLogout() {
+  function handleEndSession() {
     setSession(null);
     setReceipt(null);
+    window.sessionStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem(RECEIPT_KEY);
     navigate("/");
   }
 
   const isAuthenticated = Boolean(session?.token);
+  const isAccredited = isAuthenticated && Boolean(session?.biometricVerified);
+  const onboardingRedirect = isAccredited ? "/dashboard" : "/camera";
+  const hasCurrentReceipt =
+    Boolean(receipt) &&
+    Boolean(session?.sessionInstanceId) &&
+    receipt?.sessionInstanceId === session.sessionInstanceId;
 
   return (
     <Layout
       isAuthenticated={isAuthenticated}
       currentPath={location.pathname}
-      onLogout={handleLogout}
+      onLogout={handleEndSession}
       session={session}
     >
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={isAuthenticated ? <Navigate to={onboardingRedirect} replace /> : <Home />}
+        />
         <Route
           path="/login"
           element={
-            <Login
-              session={session}
-              onAuthenticated={handleAuthenticated}
-            />
+            isAuthenticated ? (
+              <Navigate to={onboardingRedirect} replace />
+            ) : (
+              <Login onAuthenticated={handleAuthenticated} />
+            )
           }
         />
         <Route
           path="/camera"
           element={
-            isAuthenticated ? (
-              <BiometricVerification session={session} onVerified={handleBiometricVerified} />
+            isAccredited ? (
+              <Navigate to="/dashboard" replace />
+            ) : isAuthenticated ? (
+              <BiometricVerification
+                session={session}
+                onEndSession={handleEndSession}
+                onVerified={handleBiometricVerified}
+              />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -113,19 +148,25 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            isAuthenticated && session?.biometricVerified ? (
-              <Dashboard session={session} />
+            isAccredited ? (
+              <Dashboard session={session} onEndSession={handleEndSession} />
             ) : (
               <Navigate to={isAuthenticated ? "/camera" : "/login"} replace />
             )
           }
         />
-        <Route path="/eligibility" element={<Navigate to={isAuthenticated ? "/camera" : "/login"} replace />} />
-        <Route path="/biometric-verify" element={<Navigate to={isAuthenticated ? "/camera" : "/login"} replace />} />
+        <Route
+          path="/eligibility"
+          element={<Navigate to={isAuthenticated ? onboardingRedirect : "/login"} replace />}
+        />
+        <Route
+          path="/biometric-verify"
+          element={<Navigate to={isAuthenticated ? onboardingRedirect : "/login"} replace />}
+        />
         <Route
           path="/ballot"
           element={
-            isAuthenticated && session?.eligibilityConfirmed && session?.biometricVerified ? (
+            isAccredited && session?.eligibilityConfirmed ? (
               <Ballot session={session} onReceiptReady={handleReceipt} />
             ) : isAuthenticated ? (
               <Navigate to="/camera" replace />
@@ -137,8 +178,10 @@ export default function App() {
         <Route
           path="/receipt"
           element={
-            isAuthenticated && session?.biometricVerified ? (
+            isAccredited && hasCurrentReceipt ? (
               <Receipt receipt={receipt} />
+            ) : isAccredited ? (
+              <Navigate to="/dashboard" replace />
             ) : (
               <Navigate to={isAuthenticated ? "/camera" : "/login"} replace />
             )
@@ -146,7 +189,10 @@ export default function App() {
         />
         <Route path="/board" element={<PublicBoard />} />
         <Route path="/tally" element={<Tally />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="*"
+          element={<Navigate to={isAuthenticated ? onboardingRedirect : "/"} replace />}
+        />
       </Routes>
     </Layout>
   );

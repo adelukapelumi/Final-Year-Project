@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "../components/Icon";
 import { fetchTally } from "../api";
 
-export default function Dashboard({ session }) {
+export default function Dashboard({ session, onEndSession }) {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -41,6 +41,10 @@ export default function Dashboard({ session }) {
             <span><Icon name="map" size={14} /> {profile.diasporaLocation || "Diaspora"}</span>
           </div>
           <span className="status-badge status-badge--success"><Icon name="check" size={13} /> Verified</span>
+          <button className="button button--outline button--small dashboard-end-session" type="button" onClick={onEndSession}>
+            <Icon name="logout" size={15} />
+            End Session
+          </button>
         </div>
       </div>
 
@@ -97,6 +101,10 @@ export default function Dashboard({ session }) {
           <div><Icon name="check" size={16} /> NIN eligibility confirmed</div>
           <div><Icon name="check" size={16} /> Face presence verified</div>
           <div><Icon name="check" size={16} /> Ballot access unlocked</div>
+          <button className="button button--light button--wide dashboard-side-card__end" type="button" onClick={onEndSession}>
+            <Icon name="logout" size={17} />
+            End Session
+          </button>
         </aside>
       </div>
     </section>

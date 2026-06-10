@@ -2,7 +2,7 @@ import { useState } from "react";
 import Icon from "../components/Icon";
 import { authenticate } from "../api";
 
-export default function Login({ session, onAuthenticated }) {
+export default function Login({ onAuthenticated }) {
   const [nin, setNin] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
@@ -105,13 +105,6 @@ export default function Login({ session, onAuthenticated }) {
             {isBusy ? "Verifying Eligibility..." : "Verify Eligibility"}
             {!isBusy ? <Icon name="arrow" size={18} /> : <span className="spinner spinner--small" />}
           </button>
-
-          {session?.token ? (
-            <div className="status status--success">
-              <Icon name="check" size={18} />
-              <span>An active accreditation session is available.</span>
-            </div>
-          ) : null}
 
           <p className="form-security"><Icon name="lock" size={14} /> Encrypted session transport</p>
         </form>
