@@ -1,4 +1,4 @@
-FROM rust:1.78-bookworm AS proof-builder
+FROM rust:1-bookworm AS proof-builder
 
 WORKDIR /build/proof_engine/winterfell
 
