@@ -1,0 +1,16 @@
+.git
+.github
+.agents
+.codex
+
+backend/__pycache__/
+backend/.backend-dev.err.log
+backend/.backend-dev.out.log
+backend/.backend-dev.pid
+
+frontend/dist/
+frontend/node_modules/
+
+proof_engine/winterfell/target/
+proof_engine/winterfell/benchmarks/artifacts/
+proof_engine/winterfell/benchmarks/results/archive/

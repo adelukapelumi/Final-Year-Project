@@ -12,7 +12,7 @@ if str(BACKEND_DIR) not in sys.path:
 from app import create_app  # noqa: E402
 
 
-def create_test_app(tmp_path: Path):
+def create_test_app(tmp_path: Path, overrides: dict | None = None):
     db_path = tmp_path / "test.sqlite3"
     proof_artifacts = tmp_path / "proof_artifacts"
     proof_inputs = tmp_path / "proof_inputs"
@@ -59,17 +59,18 @@ def create_test_app(tmp_path: Path):
         ),
         encoding="utf-8",
     )
-    return create_app(
-        {
-            "TESTING": True,
-            "SECRET_KEY": "test-secret",
-            "DATABASE_PATH": db_path,
-            "NIN_REGISTRY_PATH": registry_path,
-            "PROOF_ARTIFACTS_DIR": proof_artifacts,
-            "PROOF_INPUTS_DIR": proof_inputs,
-            "TOKEN_TTL_SECONDS": 3600,
-        }
-    )
+    config = {
+        "TESTING": True,
+        "SECRET_KEY": "test-secret",
+        "DATABASE_PATH": db_path,
+        "NIN_REGISTRY_PATH": registry_path,
+        "PROOF_ARTIFACTS_DIR": proof_artifacts,
+        "PROOF_INPUTS_DIR": proof_inputs,
+        "TOKEN_TTL_SECONDS": 3600,
+    }
+    if overrides:
+        config.update(overrides)
+    return create_app(config)
 
 
 def register(client, nin: str = "12345678901"):

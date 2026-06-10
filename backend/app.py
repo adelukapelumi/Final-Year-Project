@@ -5,14 +5,20 @@ import uuid
 from pathlib import Path
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 from auth import authenticate_token, register_or_login, resolve_token_from_request
-from config import Config
+from config import Config, LOCAL_FRONTEND_ORIGINS
 from crypto_utils import encrypt_vote
 from db import close_db, get_db, init_db
 from events import ACTIVE_EVENT_ID, list_events, require_event
 from nin_registry import MockNINRegistry, PROTOTYPE_FALLBACK_MESSAGE
-from proof_client import ProofClientError, generate_and_verify_proof, verify_existing_proof
+from proof_client import (
+    ProofClientError,
+    generate_and_verify_proof,
+    proof_binary_available,
+    verify_existing_proof,
+)
 from tally_service import compute_tally, fetch_ballot_for_verification, public_board
 
 
@@ -28,11 +34,40 @@ def _normalize_vote_value(value) -> tuple[int, str]:
     raise ValueError("vote must be one of yes/no/1/0")
 
 
+def _allowed_cors_origins(config: dict) -> list[str]:
+    configured = []
+    raw_origins = str(config.get("ALLOWED_ORIGINS", "") or "")
+    for origin in raw_origins.split(","):
+        normalized = origin.strip()
+        if normalized and normalized != "*":
+            configured.append(normalized)
+
+    seen = set()
+    allowed = []
+    for origin in [*LOCAL_FRONTEND_ORIGINS, *configured]:
+        if origin in seen:
+            continue
+        seen.add(origin)
+        allowed.append(origin)
+    return allowed
+
+
+def _configure_cors(app: Flask) -> None:
+    CORS(
+        app,
+        resources={r"/*": {"origins": _allowed_cors_origins(app.config)}},
+        methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+
+
 def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
     if test_config:
         app.config.update(test_config)
+    app.config["ENCRYPTION_KEY"] = Config.encryption_key(app.config["SECRET_KEY"])
+    _configure_cors(app)
 
     db_path = Path(app.config["DATABASE_PATH"])
     Path(app.config["DATABASE_PATH"]).parent.mkdir(parents=True, exist_ok=True)
@@ -45,6 +80,16 @@ def create_app(test_config: dict | None = None) -> Flask:
             init_db()
         else:
             init_db()
+
+    @app.get("/health")
+    def health():
+        return jsonify({"status": "ok"}), 200
+
+    @app.get("/health/proof")
+    def health_proof():
+        if proof_binary_available():
+            return jsonify({"status": "ok", "proof_engine": "available"}), 200
+        return jsonify({"status": "error", "proof_engine": "unavailable"}), 503
 
     @app.post("/register")
     @app.post("/login")
@@ -157,7 +202,8 @@ def create_app(test_config: dict | None = None) -> Flask:
         try:
             proof_result = generate_and_verify_proof(vote_value=vote_value, registered_flag=1, already_voted_flag=0)
         except ProofClientError as exc:
-            return jsonify({"error": f"proof generation failed: {exc}"}), 500
+            app.logger.exception("Proof generation failed: %s", exc)
+            return jsonify({"error": "proof generation failed"}), 500
 
         ballot_id = uuid.uuid4().hex
         encrypted_vote = encrypt_vote(vote_label, app.config["ENCRYPTION_KEY"])
@@ -230,7 +276,8 @@ def create_app(test_config: dict | None = None) -> Flask:
         try:
             result = verify_existing_proof(ballot["public_inputs"], ballot["proof_path"])
         except ProofClientError as exc:
-            return jsonify({"error": f"proof verification failed: {exc}"}), 500
+            app.logger.exception("Proof verification failed: %s", exc)
+            return jsonify({"error": "proof verification failed"}), 500
 
         return jsonify(
             {
@@ -263,7 +310,6 @@ def create_app(test_config: dict | None = None) -> Flask:
             )
         ), 200
 
-    app.config["ENCRYPTION_KEY"] = Config.encryption_key(app.config["SECRET_KEY"])
     return app
 
 

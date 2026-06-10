@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import uuid
@@ -14,9 +15,17 @@ class ProofClientError(RuntimeError):
     pass
 
 
+def _is_executable(binary_path: Path) -> bool:
+    return binary_path.exists() and (os.name == "nt" or os.access(binary_path, os.X_OK))
+
+
+def proof_binary_available() -> bool:
+    return _is_executable(Path(current_app.config["PROOF_BINARY_PATH"]))
+
+
 def _build_binary() -> Path:
     binary_path = Path(current_app.config["PROOF_BINARY_PATH"])
-    if binary_path.exists():
+    if _is_executable(binary_path):
         return binary_path
 
     cargo_path = shutil.which("cargo")
@@ -36,8 +45,8 @@ def _build_binary() -> Path:
         raise ProofClientError("cargo is not installed or not available on PATH") from exc
     if result.returncode != 0:
         raise ProofClientError(result.stderr.strip() or result.stdout.strip() or "cargo build failed")
-    if not binary_path.exists():
-        raise ProofClientError(f"proof binary not found at {binary_path}")
+    if not _is_executable(binary_path):
+        raise ProofClientError("proof binary not found")
     return binary_path
 
 

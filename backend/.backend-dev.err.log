@@ -9,3 +9,34 @@ Press CTRL+C to quit
 127.0.0.1 - - [10/Jun/2026 08:28:23] "GET /tally?event_id=overseas-voter-education-poll HTTP/1.1" 200 -
 127.0.0.1 - - [10/Jun/2026 08:28:23] "GET /board?event_id=overseas-voter-education-poll HTTP/1.1" 200 -
 127.0.0.1 - - [10/Jun/2026 08:28:23] "GET /tally?event_id=secure-ballot-audit-drill HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:30:53] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:01] "POST /biometric-verify HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:02] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:02] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:02] "GET /tally?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:13] "POST /vote HTTP/1.1" 201 -
+127.0.0.1 - - [10/Jun/2026 08:31:13] "POST /verify HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:13] "GET /board?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:17] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:17] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:17] "GET /tally?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:17] "GET /tally?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:19] "GET /tally?event_id=overseas-voter-education-poll HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:28] "GET /tally?event_id=secure-ballot-audit-drill HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:47] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:47] "GET /board?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:47] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:47] "GET /board?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:50] "GET /board?event_id=overseas-voter-education-poll HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:55] "GET /board?event_id=secure-ballot-audit-drill HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:31:59] "POST /verify HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:32:09] "GET /board?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:32:14] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:32:14] "GET /events HTTP/1.1" 200 -
+127.0.0.1 - - [10/Jun/2026 08:32:14] "GET /tally?event_id=diaspora-referendum-2026 HTTP/1.1" 200 -
+ * Detected change in 'C:\\Users\\LENOVO\\Desktop\\Diaspora E-voting with ZK-Starks prototype\\backend\\config.py', reloading
+ * Restarting with stat
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Desktop\Diaspora E-voting with ZK-Starks prototype\backend\app.py", line 8, in <module>
+    from flask_cors import CORS
+ModuleNotFoundError: No module named 'flask_cors'

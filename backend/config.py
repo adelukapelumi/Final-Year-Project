@@ -12,6 +12,14 @@ INSTANCE_DIR = BASE_DIR / "instance"
 PROOF_ENGINE_DIR = BASE_DIR.parent / "proof_engine" / "winterfell"
 PROOF_BINARY_NAME = "referendum_acceptance_winterfell.exe" if os.name == "nt" else "referendum_acceptance_winterfell"
 PROOF_BINARY_PATH = PROOF_ENGINE_DIR / "target" / "release" / PROOF_BINARY_NAME
+LOCAL_FRONTEND_ORIGINS = (
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+)
 
 
 class Config:
@@ -25,6 +33,7 @@ class Config:
     PROOF_ARTIFACTS_DIR = Path(os.environ.get("EVOTING_PROOF_ARTIFACTS_DIR", BASE_DIR / "proof_artifacts"))
     PROOF_INPUTS_DIR = Path(os.environ.get("EVOTING_PROOF_INPUTS_DIR", BASE_DIR / "proof_inputs"))
     TOKEN_TTL_SECONDS = int(os.environ.get("EVOTING_TOKEN_TTL_SECONDS", "86400"))
+    ALLOWED_ORIGINS = os.environ.get("EVOTING_ALLOWED_ORIGINS", "")
 
     @staticmethod
     def encryption_key(secret_key: str) -> bytes:
