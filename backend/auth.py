@@ -91,9 +91,17 @@ def authenticate_token(token: str) -> sqlite3.Row:
     token_hash = hash_token(token)
     voter = db.execute(
         """
-        SELECT id, nin_hash, session_token_hash, token_expires_at, has_voted, biometric_verified, biometric_verified_at
-        FROM voters
-        WHERE session_token_hash = ?
+        SELECT
+            v.id,
+            v.nin_hash,
+            v.session_token_hash,
+            v.token_expires_at,
+            v.has_voted,
+            v.biometric_verified,
+            v.biometric_verified_at
+        FROM voters v
+        JOIN mock_voters mv ON mv.nin_hash = v.nin_hash
+        WHERE v.session_token_hash = ? AND mv.is_active = 1
         """,
         (token_hash,),
     ).fetchone()

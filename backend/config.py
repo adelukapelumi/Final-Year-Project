@@ -24,6 +24,7 @@ LOCAL_FRONTEND_ORIGINS = (
 
 class Config:
     SECRET_KEY = os.environ.get("EVOTING_SECRET_KEY", "dev-secret-key-change-me")
+    ADMIN_TOKEN = os.environ.get("EVOTING_ADMIN_TOKEN", "")
     DATABASE_PATH = Path(os.environ.get("EVOTING_DATABASE_PATH", INSTANCE_DIR / "evoting.sqlite3"))
     SCHEMA_PATH = BASE_DIR / "schema.sql"
     NIN_REGISTRY_PATH = Path(os.environ.get("EVOTING_NIN_REGISTRY_PATH", DATA_DIR / "mock_nin_registry.json"))

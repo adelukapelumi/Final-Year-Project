@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
 from flask import current_app, g
 
+from crypto_utils import hash_nin
 from events import ACTIVE_EVENT_ID
 
 
@@ -86,6 +88,60 @@ def _migrate_ballots_to_events(db: sqlite3.Connection) -> None:
     db.execute("ALTER TABLE ballots_event_migration RENAME TO ballots")
 
 
+def _seed_mock_voters_if_empty(db: sqlite3.Connection) -> None:
+    existing = db.execute("SELECT COUNT(*) AS count FROM mock_voters").fetchone()["count"]
+    if existing:
+        return
+
+    registry_path = Path(current_app.config["NIN_REGISTRY_PATH"])
+    if not registry_path.exists():
+        return
+
+    payload = json.loads(registry_path.read_text(encoding="utf-8"))
+    registered_voters = payload.get("registered_voters")
+    if registered_voters is None:
+        registered_voters = [{"nin": nin} for nin in payload.get("registered_nins", [])]
+
+    for item in registered_voters:
+        normalized_nin = "".join(ch for ch in str(item.get("nin", "")) if ch.isdigit())
+        if len(normalized_nin) != 11:
+            continue
+        biometric = item.get("biometric") or {}
+        biometric_flag = item.get("mock_biometric_enabled")
+        if biometric_flag is None:
+            if "face_template_enabled" in item:
+                biometric_flag = item.get("face_template_enabled")
+            elif "face_template_id" in biometric or "accepted_probe_id" in biometric or "verification_mode" in biometric:
+                biometric_flag = bool(biometric.get("face_template_id", True))
+            else:
+                biometric_flag = True
+        db.execute(
+            """
+            INSERT INTO mock_voters (
+                nin_hash,
+                nin_last4,
+                masked_nin,
+                display_name,
+                diaspora_location,
+                voter_category,
+                mock_biometric_enabled,
+                is_active,
+                created_at,
+                updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """,
+            (
+                hash_nin(normalized_nin),
+                normalized_nin[-4:],
+                f"{'*' * 7}{normalized_nin[-4:]}",
+                item.get("display_name", "Prototype Diaspora Voter"),
+                item.get("diaspora_location", "Diaspora"),
+                item.get("voter_category", "Eligible Diaspora Voter"),
+                1 if biometric_flag else 0,
+            ),
+        )
+
+
 def init_db() -> None:
     db = get_db()
     schema_path = Path(current_app.config["SCHEMA_PATH"])
@@ -96,4 +152,5 @@ def init_db() -> None:
     if "biometric_verified_at" not in columns:
         db.execute("ALTER TABLE voters ADD COLUMN biometric_verified_at TEXT")
     _migrate_ballots_to_events(db)
+    _seed_mock_voters_if_empty(db)
     db.commit()

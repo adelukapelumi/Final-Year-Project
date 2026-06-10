@@ -13,6 +13,7 @@ from app import create_app  # noqa: E402
 
 
 def create_test_app(tmp_path: Path, overrides: dict | None = None):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     db_path = tmp_path / "test.sqlite3"
     proof_artifacts = tmp_path / "proof_artifacts"
     proof_inputs = tmp_path / "proof_inputs"
@@ -62,6 +63,7 @@ def create_test_app(tmp_path: Path, overrides: dict | None = None):
     config = {
         "TESTING": True,
         "SECRET_KEY": "test-secret",
+        "ADMIN_TOKEN": "test-admin-token",
         "DATABASE_PATH": db_path,
         "NIN_REGISTRY_PATH": registry_path,
         "PROOF_ARTIFACTS_DIR": proof_artifacts,
@@ -98,3 +100,7 @@ def vote(client, token: str, vote_value="yes", event_id="diaspora-referendum-202
         "/vote",
         json={"token": token, "vote": vote_value, "event_id": event_id},
     )
+
+
+def admin_headers(token: str = "test-admin-token"):
+    return {"X-Admin-Token": token}

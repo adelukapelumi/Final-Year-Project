@@ -1,3 +1,19 @@
+CREATE TABLE IF NOT EXISTS mock_voters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nin_hash TEXT NOT NULL UNIQUE,
+    nin_last4 TEXT NOT NULL,
+    masked_nin TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    diaspora_location TEXT NOT NULL,
+    voter_category TEXT NOT NULL DEFAULT 'Eligible Diaspora Voter',
+    mock_biometric_enabled INTEGER NOT NULL DEFAULT 1,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK (mock_biometric_enabled IN (0, 1)),
+    CHECK (is_active IN (0, 1))
+);
+
 CREATE TABLE IF NOT EXISTS voters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nin_hash TEXT NOT NULL UNIQUE,

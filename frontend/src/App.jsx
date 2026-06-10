@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Layout from "./components/Layout";
+import AdminConsole from "./pages/AdminConsole";
 import Ballot from "./pages/Ballot";
 import BiometricVerification from "./pages/BiometricVerification";
 import Dashboard from "./pages/Dashboard";
@@ -208,6 +209,7 @@ export default function App() {
         />
         <Route path="/board" element={<PublicBoard />} />
         <Route path="/tally" element={<Tally />} />
+        <Route path="/admin" element={<AdminConsole />} />
         <Route
           path="*"
           element={<Navigate to={isAuthenticated ? onboardingRedirect : "/"} replace />}

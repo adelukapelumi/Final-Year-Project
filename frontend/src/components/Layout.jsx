@@ -3,6 +3,7 @@ import Nav from "./Nav";
 import Icon from "./Icon";
 
 const publicPaths = new Set(["/", "/login", "/camera", "/board", "/tally"]);
+const adminPaths = new Set(["/admin"]);
 
 function Brand() {
   return (
@@ -19,6 +20,25 @@ function Brand() {
 }
 
 export default function Layout({ children, currentPath, isAuthenticated, onLogout, session }) {
+  if (adminPaths.has(currentPath)) {
+    return (
+      <div className="admin-shell">
+        <header className="admin-header">
+          <Link to="/" aria-label="DiasporaVote home"><Brand /></Link>
+          <div className="admin-header__actions">
+            <span className="secure-chip"><Icon name="shield" size={14} /> Prototype registry console</span>
+            <Link className="button button--outline button--small" to="/">Return Home</Link>
+          </div>
+        </header>
+        <main className="admin-content">{children}</main>
+        <footer className="admin-footer">
+          <span>Â© 2026 DiasporaVote prototype</span>
+          <span><Icon name="lock" size={14} /> Demo registry management only</span>
+        </footer>
+      </div>
+    );
+  }
+
   if (publicPaths.has(currentPath)) {
     return (
       <div className="public-shell">

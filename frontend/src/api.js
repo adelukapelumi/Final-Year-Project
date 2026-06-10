@@ -1,5 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const VALID_VOTES = new Set(["yes", "no"]);
+const ADMIN_CONFIRMATION_TEXT = "RESET DEMO DATA";
 
 function buildUrl(path) {
   return `${API_BASE_URL}${path}`;
@@ -108,4 +109,70 @@ export function fetchBoard(eventId) {
 export function fetchTally(eventId) {
   const query = eventId ? `?event_id=${encodeURIComponent(eventId)}` : "";
   return request(`/tally${query}`, { method: "GET" });
+}
+
+function adminRequest(path, token, options = {}) {
+  return request(path, {
+    ...options,
+    headers: {
+      "X-Admin-Token": token,
+      ...(options.headers || {})
+    }
+  });
+}
+
+export function getAdminConfirmationText() {
+  return ADMIN_CONFIRMATION_TEXT;
+}
+
+export function validateAdminToken(token) {
+  return adminRequest("/admin/me", token, { method: "GET" });
+}
+
+export function fetchAdminVoters(token) {
+  return adminRequest("/admin/voters", token, { method: "GET" });
+}
+
+export function createAdminVoter(token, payload) {
+  return adminRequest("/admin/voters", token, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function resetAdminVoter(token, voterId, eventId = "") {
+  return adminRequest(`/admin/voters/${voterId}/reset`, token, {
+    method: "POST",
+    body: JSON.stringify(eventId ? { event_id: eventId } : {})
+  });
+}
+
+export function deactivateAdminVoter(token, voterId) {
+  return adminRequest(`/admin/voters/${voterId}/deactivate`, token, {
+    method: "POST",
+    body: JSON.stringify({})
+  });
+}
+
+export function deleteAdminVoter(token, voterId) {
+  return adminRequest(`/admin/voters/${voterId}`, token, {
+    method: "DELETE"
+  });
+}
+
+export function resetAdminEvent(token, eventId) {
+  return adminRequest(`/admin/events/${encodeURIComponent(eventId)}/reset`, token, {
+    method: "POST",
+    body: JSON.stringify({})
+  });
+}
+
+export function resetAdminDemoData(token, clearRegistry = false) {
+  return adminRequest("/admin/reset-demo-data", token, {
+    method: "POST",
+    body: JSON.stringify({
+      confirmation_text: ADMIN_CONFIRMATION_TEXT,
+      clear_registry: clearRegistry
+    })
+  });
 }

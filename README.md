@@ -30,7 +30,8 @@ The Vite frontend can call the backend through `VITE_API_BASE_URL`. If that vari
 
 The current accreditation flow is intentionally development-only:
 
-- mock NIN verification checks the submitted 11-digit NIN against `backend/data/mock_nin_registry.json`
+- mock NIN verification checks the submitted 11-digit NIN against the DB-backed mock voter registry
+- on first startup, existing records from `backend/data/mock_nin_registry.json` seed the registry table if it is empty
 - camera-based prototype verification confirms face presence using a browser camera session
 - ballot access is granted only after the mock NIN is eligible, the voter has not already voted, and the prototype face check passes
 
@@ -64,6 +65,7 @@ Important repository constraint:
 Required Railway variables:
 
 - `EVOTING_SECRET_KEY=<strong generated secret>`
+- `EVOTING_ADMIN_TOKEN=<strong admin token>`
 - `EVOTING_DATABASE_PATH=/data/evoting.sqlite3`
 - `EVOTING_PROOF_ARTIFACTS_DIR=/data/proof_artifacts`
 - `EVOTING_PROOF_INPUTS_DIR=/data/proof_inputs`
@@ -74,10 +76,45 @@ Notes:
 
 - `EVOTING_ALLOWED_ORIGINS` accepts a comma-separated list. Local frontend origins on `localhost` and `127.0.0.1` are still allowed for development.
 - CORS is intentionally allowlist-based. Do not use wildcard origins in production.
-- The backend allows the `Authorization` header for authenticated endpoints.
+- The backend allows the `Authorization` header for voter endpoints and `X-Admin-Token` for prototype admin endpoints.
 - `GET /health` returns `{"status":"ok"}` without generating a proof.
 - `GET /health/proof` checks whether the configured proof binary is available without exposing private absolute paths.
 - One Gunicorn worker is intentional because this demo uses SQLite writes and persistent proof artifacts.
+
+### Prototype Registry Admin
+
+The hidden `/admin` route is for prototype/demo registry management only.
+
+What it is for:
+
+- validating an admin session with `X-Admin-Token: <EVOTING_ADMIN_TOKEN>`
+- creating mock eligible voters without redeploying
+- deactivating or deleting demo voters
+- resetting one voter, the active event, or all demo data without manually editing Railway volume contents
+
+What it is not:
+
+- a full INEC officer dashboard
+- a production election management system
+- a live NIMC, NIN, BVAS, blockchain, or candidate-management integration
+
+Privacy behavior:
+
+- the console stores the admin token in browser `sessionStorage` only
+- the console shows masked NIN values and last-four digits only
+- the console does not show raw vote choices, decrypted votes, session tokens, secret values, or private proof paths
+
+### Safe Demo Reset Options
+
+For deployed prototypes, prefer `/admin` for reset operations.
+
+Available prototype reset actions:
+
+- reset one mock voter: clears that voter session, biometric state, ballots, and linked proof artifacts
+- reset the active event: clears only that event's ballots/proofs and recalculates `has_voted`
+- reset demo data: clears ballots, proof artifacts, proof inputs, voter sessions, biometric state, and `has_voted` flags while keeping the mock voter registry intact
+
+The destructive frontend reset action requires the confirmation text `RESET DEMO DATA`.
 
 ### Persistent Storage Plan
 
@@ -118,6 +155,8 @@ What it clears:
 
 The script refuses to touch paths outside `/data`.
 
+Use this shell reset only when the admin console is unavailable. In normal deployed prototype use, prefer the protected `/admin` reset actions.
+
 ### Frontend Deployment
 
 The frontend reads `VITE_API_BASE_URL` for API calls. No deployed API call should rely on the Vite local proxy.
@@ -147,14 +186,17 @@ Browser camera access works only on `https://` origins or `localhost`. If the de
 1. Open the backend health check at `/health` and confirm HTTP 200 with `{"status":"ok"}`.
 2. Open the frontend.
 3. Confirm the frontend can fetch `/events`.
-4. Accredit using a mock NIN from `backend/data/mock_nin_registry.json`.
-5. Complete the camera verification step.
-6. Proceed to the active referendum event.
-7. Cast a `yes` or `no` vote.
-8. Confirm the receipt appears.
-9. Verify the ballot from the public board.
-10. Confirm the tally updates for the active event.
-11. Try a duplicate vote and confirm it is rejected.
+4. Open `/admin`, validate the admin token, and confirm the Prototype Registry Admin loads.
+5. Create or review a mock eligible voter record from the admin console.
+6. Accredit using a mock NIN from the admin registry.
+7. Complete the camera verification step.
+8. Proceed to the active referendum event.
+9. Cast a `yes` or `no` vote.
+10. Confirm the receipt appears.
+11. Verify the ballot from the public board.
+12. Confirm the tally updates for the active event.
+13. Try a duplicate vote and confirm it is rejected.
+14. Use the admin console to reset the demo voter or active event and confirm the voter can re-run the prototype flow.
 
 ## Troubleshooting
 
@@ -198,7 +240,7 @@ Browser camera access works only on `https://` origins or `localhost`. If the de
 
 ## Production Note
 
-Production deployment would require authorized and compliant integration with real election and identity systems. Those integrations are not part of this repository.
+Production deployment would require authorized and compliant integration with real election and identity systems, including appropriate INEC and NIMC controls. Those integrations are not part of this repository.
 
 ## Rust/Cargo Requirement
 

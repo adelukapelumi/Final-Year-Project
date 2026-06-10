@@ -7,6 +7,19 @@ from pathlib import Path
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from admin_service import (
+    ADMIN_CONFIRMATION_TEXT,
+    ADMIN_DISABLED_MESSAGE,
+    create_mock_voter,
+    deactivate_mock_voter,
+    delete_mock_voter,
+    list_admin_voters,
+    require_admin,
+    reset_demo_data,
+    reset_event,
+    reset_voter,
+    admin_identity,
+)
 from auth import authenticate_token, register_or_login, resolve_token_from_request
 from config import Config, LOCAL_FRONTEND_ORIGINS
 from crypto_utils import encrypt_vote
@@ -56,9 +69,23 @@ def _configure_cors(app: Flask) -> None:
     CORS(
         app,
         resources={r"/*": {"origins": _allowed_cors_origins(app.config)}},
-        methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"],
+        methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-Admin-Token"],
     )
+
+
+def _admin_error_response(exc: Exception):
+    if isinstance(exc, RuntimeError):
+        return jsonify({"error": ADMIN_DISABLED_MESSAGE}), 503
+    if isinstance(exc, ValueError):
+        message = str(exc)
+        status = 401 if "X-Admin-Token header is required" in message else 400
+        return jsonify({"error": message}), status
+    if isinstance(exc, PermissionError):
+        return jsonify({"error": str(exc)}), 403
+    if isinstance(exc, LookupError):
+        return jsonify({"error": str(exc)}), 404
+    return jsonify({"error": "admin request failed"}), 500
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -90,6 +117,88 @@ def create_app(test_config: dict | None = None) -> Flask:
         if proof_binary_available():
             return jsonify({"status": "ok", "proof_engine": "available"}), 200
         return jsonify({"status": "error", "proof_engine": "unavailable"}), 503
+
+    @app.get("/admin/me")
+    @app.post("/admin/login")
+    def admin_me():
+        try:
+            require_admin(request)
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify({"authenticated": True, "admin": admin_identity()}), 200
+
+    @app.get("/admin/voters")
+    def admin_voters():
+        try:
+            require_admin(request)
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        payload = list_admin_voters()
+        payload["admin"] = admin_identity()
+        return jsonify(payload), 200
+
+    @app.post("/admin/voters")
+    def admin_create_voter():
+        try:
+            require_admin(request)
+            voter = create_mock_voter(request.get_json(silent=True) or {})
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify({"voter": voter}), 201
+
+    @app.post("/admin/voters/<int:mock_voter_id>/deactivate")
+    def admin_deactivate_voter(mock_voter_id: int):
+        try:
+            require_admin(request)
+            result = deactivate_mock_voter(mock_voter_id)
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify(result), 200
+
+    @app.delete("/admin/voters/<int:mock_voter_id>")
+    def admin_delete_voter(mock_voter_id: int):
+        try:
+            require_admin(request)
+            result = delete_mock_voter(mock_voter_id)
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify(result), 200
+
+    @app.post("/admin/voters/<int:mock_voter_id>/reset")
+    def admin_reset_voter(mock_voter_id: int):
+        payload = request.get_json(silent=True) or {}
+        try:
+            require_admin(request)
+            result = reset_voter(mock_voter_id, payload.get("event_id"))
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify(result), 200
+
+    @app.post("/admin/events/<event_id>/reset")
+    def admin_reset_event(event_id: str):
+        try:
+            require_admin(request)
+            result = reset_event(event_id)
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify(result), 200
+
+    @app.post("/admin/reset-demo-data")
+    def admin_reset_demo():
+        payload = request.get_json(silent=True) or {}
+        try:
+            require_admin(request)
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        confirmation_text = str(payload.get("confirmation_text") or "").strip()
+        if confirmation_text != ADMIN_CONFIRMATION_TEXT:
+            return jsonify({"error": f"confirmation_text must equal {ADMIN_CONFIRMATION_TEXT}"}), 400
+
+        try:
+            result = reset_demo_data(bool(payload.get("clear_registry")))
+        except (RuntimeError, ValueError, PermissionError, LookupError) as exc:
+            return _admin_error_response(exc)
+        return jsonify(result), 200
 
     @app.post("/register")
     @app.post("/login")
