@@ -2610,7 +2610,24 @@ strong {
   margin: 0 auto;
 }
 
-.public-header > a:last-child {
+.public-header__actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 14px;
+}
+
+.public-admin-link {
+  color: #718096;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.public-admin-link:hover {
+  color: var(--blue);
+}
+
+.public-header__actions .button {
   justify-self: end;
 }
 
@@ -3625,7 +3642,7 @@ strong {
     display: none;
   }
 
-  .public-header > a:last-child {
+  .public-header__actions {
     grid-column: 2;
   }
 
@@ -3786,9 +3803,17 @@ strong {
     min-height: 72px;
   }
 
-  .public-header > a:last-child {
+  .public-header__actions {
+    gap: 8px;
+  }
+
+  .public-header__actions .button {
     padding-inline: 10px;
     font-size: 0.61rem;
+  }
+
+  .public-admin-link {
+    font-size: 0.64rem;
   }
 
   .public-header .brand__mark {

@@ -49,13 +49,16 @@ export default function Layout({ children, currentPath, isAuthenticated, onLogou
             <Link to="/board">Public Board</Link>
             <Link to="/tally">Tally</Link>
           </nav>
-          {isAuthenticated && session?.biometricVerified ? (
-            <Link className="button button--primary button--small" to="/dashboard">Dashboard</Link>
-          ) : isAuthenticated ? (
-            <Link className="button button--primary button--small" to="/camera">Accreditation Active</Link>
-          ) : (
-            <Link className="button button--outline button--small" to="/login">Start Accreditation</Link>
-          )}
+          <div className="public-header__actions">
+            <Link className="public-admin-link" to="/admin">Admin</Link>
+            {isAuthenticated && session?.biometricVerified ? (
+              <Link className="button button--primary button--small" to="/dashboard">Dashboard</Link>
+            ) : isAuthenticated ? (
+              <Link className="button button--primary button--small" to="/camera">Accreditation Active</Link>
+            ) : (
+              <Link className="button button--outline button--small" to="/login">Start Accreditation</Link>
+            )}
+          </div>
         </header>
         <main className="public-content">{children}</main>
         <footer className="public-footer">
