@@ -1,0 +1,42 @@
+{
+  "benchmark": "proof_volume_benchmark",
+  "generated_at_utc": "2026-06-18T16:27:28Z",
+  "requested_scales": [
+    1000,
+    10000,
+    100000,
+    1000000
+  ],
+  "max_seconds": 20.0,
+  "results": [
+    {
+      "scale": 1000,
+      "status": "completed",
+      "total_proof_generation_time_ms": 698.1476,
+      "average_proof_generation_time_ms": 0.698148,
+      "total_proof_verification_time_ms": 446.3921,
+      "average_proof_verification_time_ms": 0.446392,
+      "proof_size_bytes": 6309.662,
+      "total_proof_storage_estimate_bytes": 6309662,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "successful_proofs": 1000,
+      "failed_proofs": 0
+    },
+    {
+      "scale": 10000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 20 seconds"
+    },
+    {
+      "scale": 100000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 20 seconds"
+    },
+    {
+      "scale": 1000000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 20 seconds"
+    }
+  ]
+}

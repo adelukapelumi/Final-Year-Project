@@ -59,8 +59,13 @@ export default function Ballot({ session, onReceiptReady }) {
         ballotId: voteResult.ballot_id,
         eventId: event.event_id,
         eventTitle: event.title,
+        nullifier: voteResult.nullifier,
+        voteCommitment: voteResult.vote_commitment,
         proofHash: voteResult.proof_hash,
-        timestamp: boardEntry?.timestamp || "Timestamp unavailable",
+        previousChainHash: voteResult.previous_chain_hash,
+        chainHash: voteResult.chain_hash,
+        verificationStatus: voteResult.verification_status,
+        timestamp: boardEntry?.timestamp || voteResult.timestamp || "Timestamp unavailable",
         verified: Boolean(verification.verified)
       });
     } catch (requestError) {

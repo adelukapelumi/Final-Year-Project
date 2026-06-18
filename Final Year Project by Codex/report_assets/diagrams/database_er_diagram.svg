@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#173a6b"/></marker>
+    <style>
+      .title{font:700 34px Arial;fill:#102a56}.entity{fill:#fff;stroke:#173a6b;stroke-width:2.5}.catalog{fill:#fff5da;stroke:#c58b14;stroke-width:2.5}
+      .head{fill:#173a6b}.catalogHead{fill:#c58b14}.h{font:700 20px Arial;fill:#fff}.field{font:15px Consolas,monospace;fill:#334a68}
+      .key{font:700 15px Consolas,monospace;fill:#0c8a67}.note{font:15px Arial;fill:#51647f}.rel{stroke:#173a6b;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .dash{stroke:#8a6a1c;stroke-width:3;stroke-dasharray:9 7;fill:none;marker-end:url(#arrow)}.card{font:700 15px Arial;fill:#102a56}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#fff"/>
+  <text x="720" y="52" text-anchor="middle" class="title">SQLite Data Model and Event Reference</text>
+
+  <rect x="70" y="120" width="360" height="420" rx="14" class="entity"/><path d="M70 134 Q70 120 84 120 H416 Q430 120 430 134 V180 H70 Z" class="head"/>
+  <text x="250" y="158" text-anchor="middle" class="h">mock_voters</text>
+  <text x="95" y="215" class="key">PK  id</text><text x="95" y="248" class="key">UQ  nin_hash</text>
+  <text x="95" y="281" class="field">nin_last4</text><text x="95" y="314" class="field">masked_nin</text>
+  <text x="95" y="347" class="field">display_name</text><text x="95" y="380" class="field">diaspora_location</text>
+  <text x="95" y="413" class="field">voter_category</text><text x="95" y="446" class="field">mock_biometric_enabled</text>
+  <text x="95" y="479" class="field">is_active</text><text x="95" y="512" class="field">created_at / updated_at</text>
+
+  <rect x="540" y="120" width="360" height="420" rx="14" class="entity"/><path d="M540 134 Q540 120 554 120 H886 Q900 120 900 134 V180 H540 Z" class="head"/>
+  <text x="720" y="158" text-anchor="middle" class="h">voters</text>
+  <text x="565" y="215" class="key">PK  id</text><text x="565" y="248" class="key">UQ  nin_hash</text>
+  <text x="565" y="281" class="field">session_token_hash</text><text x="565" y="314" class="field">token_expires_at</text>
+  <text x="565" y="347" class="field">biometric_verified</text><text x="565" y="380" class="field">biometric_verified_at</text>
+  <text x="565" y="413" class="field">has_voted</text><text x="565" y="446" class="field">created_at / updated_at</text>
+
+  <rect x="1010" y="120" width="360" height="510" rx="14" class="entity"/><path d="M1010 134 Q1010 120 1024 120 H1356 Q1370 120 1370 134 V180 H1010 Z" class="head"/>
+  <text x="1190" y="158" text-anchor="middle" class="h">ballots</text>
+  <text x="1035" y="215" class="key">PK  id</text><text x="1035" y="248" class="key">UQ  ballot_id</text>
+  <text x="1035" y="281" class="key">FK  voter_id</text><text x="1035" y="314" class="field">event_id</text>
+  <text x="1035" y="347" class="field">encrypted_vote</text><text x="1035" y="380" class="field">proof_hash</text>
+  <text x="1035" y="413" class="field">proof_path</text><text x="1035" y="446" class="field">public_inputs</text>
+  <text x="1035" y="479" class="field">created_at</text><text x="1035" y="525" class="key">UQ (voter_id, event_id)</text>
+  <text x="1035" y="565" class="note">Prevents a second ballot by the</text><text x="1035" y="588" class="note">same voter in the same event.</text>
+
+  <rect x="540" y="650" width="360" height="160" rx="14" class="catalog"/><path d="M540 664 Q540 650 554 650 H886 Q900 650 900 664 V710 H540 Z" class="catalogHead"/>
+  <text x="720" y="688" text-anchor="middle" class="h">Application event catalog</text>
+  <text x="565" y="744" class="field">event_id, title, question</text><text x="565" y="777" class="field">ballot_type, status, dates</text>
+
+  <path d="M430 315 L530 315" class="rel"/><text x="452" y="300" class="card">1</text><text x="505" y="300" class="card">0..1</text>
+  <path d="M900 315 L1000 315" class="rel"/><text x="922" y="300" class="card">1</text><text x="972" y="300" class="card">0..*</text>
+  <path d="M1120 630 L900 700" class="dash"/><text x="970" y="675" class="note">event_id reference</text>
+  <text x="720" y="856" text-anchor="middle" class="note">The public board and tally are controlled query outputs, not unrestricted copies of private ballot records.</text>
+</svg>

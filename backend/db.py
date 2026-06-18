@@ -7,7 +7,16 @@ from pathlib import Path
 from flask import current_app, g
 
 from crypto_utils import hash_nin
-from events import ACTIVE_EVENT_ID
+from events import ACTIVE_EVENT_ID, get_event
+from verifiability import (
+    BOARD_CHAIN_GENESIS_HASH,
+    build_public_ballot_record,
+    compute_chain_hash,
+    compute_public_record_hash,
+    derive_voter_secret,
+    field_element_to_hex,
+    voter_secret_hash,
+)
 
 
 def get_db() -> sqlite3.Connection:
@@ -88,6 +97,126 @@ def _migrate_ballots_to_events(db: sqlite3.Connection) -> None:
     db.execute("ALTER TABLE ballots_event_migration RENAME TO ballots")
 
 
+def _ensure_voter_secret_hashes(db: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in db.execute("PRAGMA table_info(voters)").fetchall()}
+    if "voter_secret_hash" not in columns:
+        db.execute("ALTER TABLE voters ADD COLUMN voter_secret_hash TEXT NOT NULL DEFAULT ''")
+
+    rows = db.execute("SELECT id, nin_hash, voter_secret_hash FROM voters").fetchall()
+    for row in rows:
+        if row["voter_secret_hash"]:
+            continue
+        secret_value = derive_voter_secret(current_app.config["SECRET_KEY"], row["nin_hash"])
+        db.execute(
+            "UPDATE voters SET voter_secret_hash = ? WHERE id = ?",
+            (voter_secret_hash(secret_value), row["id"]),
+        )
+
+
+def _backfill_ballot_integrity_fields(db: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in db.execute("PRAGMA table_info(ballots)").fetchall()}
+    required_columns = {
+        "nullifier": "ALTER TABLE ballots ADD COLUMN nullifier TEXT NOT NULL DEFAULT ''",
+        "vote_commitment": "ALTER TABLE ballots ADD COLUMN vote_commitment TEXT NOT NULL DEFAULT ''",
+        "ballot_salt": "ALTER TABLE ballots ADD COLUMN ballot_salt TEXT NOT NULL DEFAULT ''",
+        "verification_status": "ALTER TABLE ballots ADD COLUMN verification_status TEXT NOT NULL DEFAULT 'verified'",
+        "previous_chain_hash": "ALTER TABLE ballots ADD COLUMN previous_chain_hash TEXT NOT NULL DEFAULT ''",
+        "current_record_hash": "ALTER TABLE ballots ADD COLUMN current_record_hash TEXT NOT NULL DEFAULT ''",
+        "chain_hash": "ALTER TABLE ballots ADD COLUMN chain_hash TEXT NOT NULL DEFAULT ''",
+    }
+    for column, statement in required_columns.items():
+        if column not in columns:
+            db.execute(statement)
+
+    rows = db.execute(
+        """
+        SELECT
+            id,
+            ballot_id,
+            event_id,
+            proof_hash,
+            created_at,
+            nullifier,
+            vote_commitment,
+            ballot_salt,
+            verification_status,
+            previous_chain_hash,
+            current_record_hash,
+            chain_hash
+        FROM ballots
+        ORDER BY event_id ASC, id ASC
+        """
+    ).fetchall()
+
+    chain_heads: dict[str, str] = {}
+    for row in rows:
+        event = get_event(row["event_id"]) or {"title": row["event_id"]}
+        verification_status = row["verification_status"] or "verified"
+        nullifier = row["nullifier"] or field_element_to_hex(
+            int.from_bytes(
+                f"legacy-nullifier:{row['ballot_id']}".encode("utf-8"),
+                "big",
+                signed=False,
+            )
+        )
+        vote_commitment = row["vote_commitment"] or field_element_to_hex(
+            int.from_bytes(
+                f"legacy-commitment:{row['ballot_id']}".encode("utf-8"),
+                "big",
+                signed=False,
+            )
+        )
+        ballot_salt = row["ballot_salt"] or field_element_to_hex(
+            int.from_bytes(
+                f"legacy-salt:{row['ballot_id']}".encode("utf-8"),
+                "big",
+                signed=False,
+            )
+        )
+        public_record = build_public_ballot_record(
+            ballot_id=row["ballot_id"],
+            event_id=row["event_id"],
+            event_title=event["title"],
+            nullifier=nullifier,
+            vote_commitment=vote_commitment,
+            proof_hash=row["proof_hash"],
+            timestamp=row["created_at"],
+            verification_status=verification_status,
+        )
+        previous_chain_hash = (
+            row["previous_chain_hash"]
+            or chain_heads.get(row["event_id"], BOARD_CHAIN_GENESIS_HASH)
+        )
+        current_record_hash = row["current_record_hash"] or compute_public_record_hash(public_record)
+        chain_hash = row["chain_hash"] or compute_chain_hash(previous_chain_hash, public_record)
+
+        db.execute(
+            """
+            UPDATE ballots
+            SET
+                nullifier = ?,
+                vote_commitment = ?,
+                ballot_salt = ?,
+                verification_status = ?,
+                previous_chain_hash = ?,
+                current_record_hash = ?,
+                chain_hash = ?
+            WHERE id = ?
+            """,
+            (
+                nullifier,
+                vote_commitment,
+                ballot_salt,
+                verification_status,
+                previous_chain_hash,
+                current_record_hash,
+                chain_hash,
+                row["id"],
+            ),
+        )
+        chain_heads[row["event_id"]] = chain_hash
+
+
 def _seed_mock_voters_if_empty(db: sqlite3.Connection) -> None:
     existing = db.execute("SELECT COUNT(*) AS count FROM mock_voters").fetchone()["count"]
     if existing:
@@ -152,5 +281,7 @@ def init_db() -> None:
     if "biometric_verified_at" not in columns:
         db.execute("ALTER TABLE voters ADD COLUMN biometric_verified_at TEXT")
     _migrate_ballots_to_events(db)
+    _ensure_voter_secret_hashes(db)
+    _backfill_ballot_integrity_fields(db)
     _seed_mock_voters_if_empty(db)
     db.commit()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from pathlib import Path
 
@@ -32,7 +33,24 @@ from proof_client import (
     proof_binary_available,
     verify_existing_proof,
 )
-from tally_service import compute_tally, fetch_ballot_for_verification, public_board
+from tally_service import (
+    build_verification_bundle,
+    compute_tally,
+    fetch_ballot_for_verification,
+    public_board,
+    verify_public_board_chain,
+)
+from verifiability import (
+    BOARD_CHAIN_GENESIS_HASH,
+    build_public_ballot_record,
+    compute_chain_hash,
+    compute_public_record_hash,
+    derive_nullifier,
+    derive_vote_commitment,
+    derive_voter_secret,
+    field_element_to_hex,
+    random_field_element,
+)
 
 
 def _normalize_vote_value(value) -> tuple[int, str]:
@@ -306,41 +324,117 @@ def create_app(test_config: dict | None = None) -> Flask:
             (voter["id"], event["event_id"]),
         ).fetchone()
         if prior_vote is not None:
-            return jsonify({"error": "duplicate vote rejected"}), 409
+            return jsonify({"error": "duplicate nullifier rejected"}), 409
+
+        voter_secret_value = derive_voter_secret(app.config["SECRET_KEY"], voter["nin_hash"])
+        voter_secret = field_element_to_hex(voter_secret_value)
+        ballot_salt = field_element_to_hex(random_field_element())
+        _event_id_scalar, nullifier = derive_nullifier(voter_secret_value, event["event_id"])
+        vote_commitment = derive_vote_commitment(vote_value, int(ballot_salt, 16))
+
+        duplicate_nullifier = db.execute(
+            "SELECT ballot_id FROM ballots WHERE nullifier = ?",
+            (nullifier,),
+        ).fetchone()
+        if duplicate_nullifier is not None:
+            return jsonify({"error": "duplicate nullifier rejected"}), 409
 
         try:
-            proof_result = generate_and_verify_proof(vote_value=vote_value, registered_flag=1, already_voted_flag=0)
+            proof_result = generate_and_verify_proof(
+                vote_value=vote_value,
+                registered_flag=1,
+                already_voted_flag=0,
+                voter_secret=voter_secret,
+                ballot_salt=ballot_salt,
+                event_id=event["event_id"],
+                nullifier=nullifier,
+                vote_commitment=vote_commitment,
+            )
         except ProofClientError as exc:
             app.logger.exception("Proof generation failed: %s", exc)
             return jsonify({"error": "proof generation failed"}), 500
 
         ballot_id = uuid.uuid4().hex
         encrypted_vote = encrypt_vote(vote_label, app.config["ENCRYPTION_KEY"])
-        db.execute(
+        previous_chain_hash_row = db.execute(
             """
-            INSERT INTO ballots (
-                ballot_id,
-                voter_id,
-                event_id,
-                encrypted_vote,
-                proof_hash,
-                proof_path,
-                public_inputs,
-                created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            SELECT chain_hash
+            FROM ballots
+            WHERE event_id = ?
+            ORDER BY id DESC
+            LIMIT 1
             """,
-            (
-                ballot_id,
-                voter["id"],
-                event["event_id"],
-                encrypted_vote,
-                proof_result["proof_hash"],
-                proof_result["proof_path"],
-                json.dumps(proof_result["public_inputs"]),
-            ),
+            (event["event_id"],),
+        ).fetchone()
+        verification_status = "verified"
+        created_at = db.execute("SELECT CURRENT_TIMESTAMP AS current_timestamp").fetchone()[
+            "current_timestamp"
+        ]
+        previous_chain_hash = (
+            previous_chain_hash_row["chain_hash"]
+            if previous_chain_hash_row is not None
+            else BOARD_CHAIN_GENESIS_HASH
         )
-        db.execute("UPDATE voters SET has_voted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (voter["id"],))
-        db.commit()
+        public_record = build_public_ballot_record(
+            ballot_id=ballot_id,
+            event_id=event["event_id"],
+            event_title=event["title"],
+            nullifier=nullifier,
+            vote_commitment=vote_commitment,
+            proof_hash=proof_result["proof_hash"],
+            timestamp=created_at,
+            verification_status=verification_status,
+        )
+        current_record_hash = compute_public_record_hash(public_record)
+        chain_hash = compute_chain_hash(previous_chain_hash, public_record)
+
+        try:
+            db.execute(
+                """
+                INSERT INTO ballots (
+                    ballot_id,
+                    voter_id,
+                    event_id,
+                    encrypted_vote,
+                    nullifier,
+                    vote_commitment,
+                    ballot_salt,
+                    proof_hash,
+                    proof_path,
+                    public_inputs,
+                    verification_status,
+                    previous_chain_hash,
+                    current_record_hash,
+                    chain_hash,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ballot_id,
+                    voter["id"],
+                    event["event_id"],
+                    encrypted_vote,
+                    nullifier,
+                    vote_commitment,
+                    ballot_salt,
+                    proof_result["proof_hash"],
+                    proof_result["proof_path"],
+                    json.dumps(proof_result["public_inputs"]),
+                    verification_status,
+                    previous_chain_hash,
+                    current_record_hash,
+                    chain_hash,
+                    created_at,
+                ),
+            )
+            db.execute(
+                "UPDATE voters SET has_voted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (voter["id"],),
+            )
+            db.commit()
+        except sqlite3.IntegrityError:
+            db.rollback()
+            return jsonify({"error": "duplicate nullifier rejected"}), 409
 
         return (
             jsonify(
@@ -348,7 +442,13 @@ def create_app(test_config: dict | None = None) -> Flask:
                     "ballot_id": ballot_id,
                     "event_id": event["event_id"],
                     "event_title": event["title"],
+                    "nullifier": nullifier,
+                    "vote_commitment": vote_commitment,
                     "proof_hash": proof_result["proof_hash"],
+                    "previous_chain_hash": previous_chain_hash,
+                    "chain_hash": chain_hash,
+                    "verification_status": verification_status,
+                    "timestamp": created_at,
                 }
             ),
             201,
@@ -394,6 +494,10 @@ def create_app(test_config: dict | None = None) -> Flask:
                 "event_id": ballot["event_id"],
                 "verified": result["verified"],
                 "proof_hash": result["proof_hash"],
+                "nullifier": ballot["nullifier"],
+                "vote_commitment": ballot["vote_commitment"],
+                "verification_status": ballot.get("verification_status", "verified"),
+                "timestamp": ballot.get("created_at"),
             }
         ), 200
 
@@ -401,9 +505,52 @@ def create_app(test_config: dict | None = None) -> Flask:
     def board():
         try:
             event = require_event(request.args.get("event_id"))
+            page = request.args.get("page", type=int)
+            page_size = request.args.get("page_size", type=int)
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
-        return jsonify({"event": event, "ballots": public_board(event["event_id"])}), 200
+        if (page is None) != (page_size is None):
+            return jsonify({"error": "page and page_size must be supplied together"}), 400
+        if page is not None and (page < 1 or page_size < 1):
+            return jsonify({"error": "page and page_size must be positive integers"}), 400
+        return (
+            jsonify(
+                {
+                    "event": event,
+                    "ballots": public_board(
+                        event["event_id"],
+                        page=page,
+                        page_size=page_size,
+                    ),
+                    "pagination": (
+                        {"page": page, "page_size": page_size} if page is not None else None
+                    ),
+                }
+            ),
+            200,
+        )
+
+    @app.get("/board/verify-chain")
+    def board_verify_chain():
+        try:
+            event = require_event(request.args.get("event_id"))
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        result = verify_public_board_chain(event["event_id"])
+        return jsonify(result), 200
+
+    @app.get("/verify/bundle/<ballot_id>")
+    def verify_bundle(ballot_id: str):
+        event_id = request.args.get("event_id")
+        if event_id:
+            try:
+                require_event(event_id)
+            except ValueError as exc:
+                return jsonify({"error": str(exc)}), 400
+        bundle = build_verification_bundle(ballot_id, event_id)
+        if bundle is None:
+            return jsonify({"error": "ballot not found"}), 404
+        return jsonify(bundle), 200
 
     @app.get("/tally")
     def tally():

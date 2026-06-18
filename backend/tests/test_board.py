@@ -29,8 +29,13 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(board_ballot["ballot_id"], ballot_id)
         self.assertEqual(board_ballot["event_id"], "diaspora-referendum-2026")
         self.assertEqual(board_ballot["event_title"], "Diaspora Voting Referendum")
+        self.assertIn("nullifier", board_ballot)
+        self.assertIn("vote_commitment", board_ballot)
         self.assertIn("proof_hash", board_ballot)
         self.assertIn("timestamp", board_ballot)
+        self.assertIn("verification_status", board_ballot)
+        self.assertIn("previous_chain_hash", board_ballot)
+        self.assertIn("chain_hash", board_ballot)
         self.assertNotIn("nin", board_ballot)
         self.assertNotIn("nin_hash", board_ballot)
         self.assertNotIn("token", board_ballot)
@@ -60,6 +65,33 @@ class BoardTests(unittest.TestCase):
         self.assertEqual(len(closed.get_json()["ballots"]), 48)
         self.assertEqual(closed.get_json()["event"]["status"], "Closed")
         self.assertTrue(closed.get_json()["ballots"][0]["ballot_id"].startswith("audit-drill-"))
+
+    def test_board_chain_verification_succeeds_for_active_event(self):
+        auth = accredit(self.client)
+        token = auth.get_json()["token"]
+        vote(self.client, token, "yes")
+
+        response = self.client.get("/board/verify-chain?event_id=diaspora-referendum-2026")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertTrue(body["verified"])
+        self.assertEqual(body["checked_ballots"], 1)
+        self.assertEqual(body["event_id"], "diaspora-referendum-2026")
+
+    def test_board_supports_pagination_parameters(self):
+        first = accredit(self.client, "12345678901")
+        second = accredit(self.client, "23456789012")
+
+        vote(self.client, first.get_json()["token"], "yes")
+        vote(self.client, second.get_json()["token"], "no")
+
+        response = self.client.get("/board?event_id=diaspora-referendum-2026&page=1&page_size=1")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(len(body["ballots"]), 1)
+        self.assertEqual(body["pagination"], {"page": 1, "page_size": 1})
 
 
 if __name__ == "__main__":

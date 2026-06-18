@@ -1,0 +1,53 @@
+{
+  "benchmark": "public_board_scalability_test",
+  "generated_at_utc": "2026-06-18T16:26:52Z",
+  "requested_ballot_table_sizes": [
+    1000,
+    10000,
+    100000,
+    1000000
+  ],
+  "max_seconds": 25.0,
+  "results": [
+    {
+      "ballot_table_size": 1000,
+      "status": "completed",
+      "database_size_bytes": 1499136,
+      "tally_query_time_ms": 37.6041,
+      "public_board_first_page_query_time_ms": 7.3563,
+      "paginated_query_time_ms": 11.3399,
+      "ballot_lookup_time_ms": 1.7843,
+      "chain_verification_time_ms": 142.2365,
+      "tally_total": 1000,
+      "first_page_rows": 50,
+      "paginated_rows": 50,
+      "chain_verified": true,
+      "lookup_found": true
+    },
+    {
+      "ballot_table_size": 10000,
+      "status": "completed",
+      "database_size_bytes": 14651392,
+      "tally_query_time_ms": 290.9437,
+      "public_board_first_page_query_time_ms": 4.8644,
+      "paginated_query_time_ms": 5.785,
+      "ballot_lookup_time_ms": 1.2536,
+      "chain_verification_time_ms": 1164.8683,
+      "tally_total": 10000,
+      "first_page_rows": 50,
+      "paginated_rows": 50,
+      "chain_verified": true,
+      "lookup_found": true
+    },
+    {
+      "ballot_table_size": 100000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    },
+    {
+      "ballot_table_size": 1000000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    }
+  ]
+}

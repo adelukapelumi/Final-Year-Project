@@ -28,6 +28,11 @@ class VoteTests(unittest.TestCase):
         self.assertTrue(body["ballot_id"])
         self.assertEqual(body["event_id"], "diaspora-referendum-2026")
         self.assertEqual(body["event_title"], "Diaspora Voting Referendum")
+        self.assertTrue(body["nullifier"].startswith("0x"))
+        self.assertTrue(body["vote_commitment"].startswith("0x"))
+        self.assertEqual(body["verification_status"], "verified")
+        self.assertEqual(len(body["previous_chain_hash"]), 64)
+        self.assertEqual(len(body["chain_hash"]), 64)
         self.assertEqual(len(body["proof_hash"]), 64)
         self.assertNotIn("proof_path", body)
         self.assertNotIn("public_inputs", body)
@@ -42,7 +47,7 @@ class VoteTests(unittest.TestCase):
 
         self.assertEqual(first.status_code, 201)
         self.assertEqual(second.status_code, 409)
-        self.assertEqual(second.get_json()["error"], "duplicate vote rejected")
+        self.assertEqual(second.get_json()["error"], "duplicate nullifier rejected")
 
     def test_ballot_uniqueness_is_scoped_per_voter_and_event(self):
         auth = accredit(self.client)
@@ -61,19 +66,33 @@ class VoteTests(unittest.TestCase):
                     voter_id,
                     event_id,
                     encrypted_vote,
+                    nullifier,
+                    vote_commitment,
+                    ballot_salt,
                     proof_hash,
                     proof_path,
-                    public_inputs
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    public_inputs,
+                    verification_status,
+                    previous_chain_hash,
+                    current_record_hash,
+                    chain_hash
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     "closed-event-ballot",
                     voter_id,
                     "secure-ballot-audit-drill",
                     "test-encrypted-vote",
+                    "0x11111111111111111111111111111111",
+                    "0x22222222222222222222222222222222",
+                    "0x33333333333333333333333333333333",
                     "test-proof-hash",
                     "test-proof-path",
                     "{}",
+                    "verified",
+                    "previous-hash",
+                    "current-record-hash",
+                    "chain-hash",
                 ),
             )
             db.commit()
@@ -100,6 +119,15 @@ class VoteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.get_json()["error"], "biometric verification required before ballot access")
+
+    def test_vote_rejects_invalid_vote_value(self):
+        auth = accredit(self.client)
+        token = auth.get_json()["token"]
+
+        response = vote(self.client, token, "maybe")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "vote must be one of yes/no/1/0")
 
 
 if __name__ == "__main__":

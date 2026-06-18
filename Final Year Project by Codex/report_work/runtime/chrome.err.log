@@ -1,0 +1,8 @@
+
+DevTools listening on ws://127.0.0.1:9223/devtools/browser/b532564e-0e6e-4e1a-bfa6-10858706c736
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1781198771.713792   13940 voice_transcription.cc:58] Registering VoiceTranscriptionCapability
+Created TensorFlow Lite XNNPACK delegate for CPU.
+Attempting to use a delegate that only supports static-sized tensors with a graph that has dynamic-sized tensors (tensor#-1 is a dynamic-sized tensor).
+[1544:4852:0611/182905.755:ERROR:services\on_device_model\public\cpp\service_client.cc:36] Unexpected on_device_model service disconnect: The device's GPU is not supported.
+[1544:4852:0611/192350.567:ERROR:components\device_event_log\device_event_log_impl.cc:202] [19:23:50.572] USB: usb_service_win.cc:105 SetupDiGetDeviceProperty({{A45C254E-DF1C-4EFD-8020-67D146A850E0}, 6}) failed: Element not found. (0x490)

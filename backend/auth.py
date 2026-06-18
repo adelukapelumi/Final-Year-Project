@@ -8,6 +8,7 @@ from flask import current_app
 from crypto_utils import constant_time_equal, hash_nin, hash_token, issue_session_token
 from db import get_db
 from nin_registry import MockNINRegistry
+from verifiability import derive_voter_secret, voter_secret_hash
 
 
 def normalize_nin(nin: str | None) -> str:
@@ -33,6 +34,9 @@ def resolve_token_from_request(request) -> str:
 def register_or_login(nin: str) -> dict:
     normalized_nin = normalize_nin(nin)
     nin_hash = hash_nin(normalized_nin)
+    derived_secret_hash = voter_secret_hash(
+        derive_voter_secret(current_app.config["SECRET_KEY"], nin_hash)
+    )
     registry = MockNINRegistry(current_app.config["NIN_REGISTRY_PATH"])
     if not registry.is_registered_hash(nin_hash):
         raise PermissionError("nin is not registered")
@@ -48,6 +52,7 @@ def register_or_login(nin: str) -> dict:
             """
             INSERT INTO voters (
                 nin_hash,
+                voter_secret_hash,
                 session_token_hash,
                 token_expires_at,
                 biometric_verified,
@@ -55,9 +60,9 @@ def register_or_login(nin: str) -> dict:
                 created_at,
                 updated_at
             )
-            VALUES (?, ?, ?, 0, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, 0, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """,
-            (nin_hash, token_hash, expires_at),
+            (nin_hash, derived_secret_hash, token_hash, expires_at),
         )
         voter_id = cursor.lastrowid
     else:
@@ -67,13 +72,14 @@ def register_or_login(nin: str) -> dict:
             UPDATE voters
             SET
                 session_token_hash = ?,
+                voter_secret_hash = ?,
                 token_expires_at = ?,
                 biometric_verified = 0,
                 biometric_verified_at = NULL,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
-            (token_hash, expires_at, voter_id),
+            (token_hash, derived_secret_hash, expires_at, voter_id),
         )
     db.commit()
 

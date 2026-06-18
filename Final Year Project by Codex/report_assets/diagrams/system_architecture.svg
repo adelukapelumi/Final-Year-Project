@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#173a6b"/>
+    </marker>
+    <style>
+      .title{font:700 34px Arial;fill:#102a56}.subtitle{font:18px Arial;fill:#51647f}
+      .band{fill:#eef4fb;stroke:#aac0dc;stroke-width:2}.box{fill:#fff;stroke:#173a6b;stroke-width:2}
+      .secure{fill:#e8f8f2;stroke:#0c8a67;stroke-width:2}.store{fill:#fff5da;stroke:#c58b14;stroke-width:2}
+      .h{font:700 20px Arial;fill:#102a56}.t{font:16px Arial;fill:#334a68}.small{font:14px Arial;fill:#51647f}
+      .arrow{stroke:#173a6b;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .dash{stroke:#6c809a;stroke-width:2.5;stroke-dasharray:8 7;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#ffffff"/>
+  <text x="720" y="56" text-anchor="middle" class="title">DiasporaVote System Architecture</text>
+  <text x="720" y="86" text-anchor="middle" class="subtitle">Implemented controlled binary referendum prototype</text>
+
+  <rect x="55" y="120" width="1330" height="120" rx="18" class="band"/>
+  <text x="80" y="153" class="h">User and presentation layer</text>
+  <rect x="95" y="170" width="245" height="52" rx="10" class="box"/><text x="218" y="202" text-anchor="middle" class="t">Eligible mock voter</text>
+  <rect x="390" y="170" width="245" height="52" rx="10" class="box"/><text x="512" y="202" text-anchor="middle" class="t">Public observer</text>
+  <rect x="685" y="170" width="245" height="52" rx="10" class="box"/><text x="807" y="202" text-anchor="middle" class="t">Prototype administrator</text>
+  <rect x="1000" y="156" width="330" height="66" rx="12" class="secure"/>
+  <text x="1165" y="184" text-anchor="middle" class="h">React frontend</text>
+  <text x="1165" y="207" text-anchor="middle" class="small">Voter, public board, tally and admin UI</text>
+
+  <rect x="55" y="285" width="1330" height="260" rx="18" class="band"/>
+  <text x="80" y="321" class="h">Application and control layer</text>
+  <rect x="95" y="350" width="250" height="82" rx="12" class="box"/>
+  <text x="220" y="382" text-anchor="middle" class="h">Flask API</text>
+  <text x="220" y="407" text-anchor="middle" class="small">Session and endpoint control</text>
+  <rect x="390" y="350" width="250" height="82" rx="12" class="secure"/>
+  <text x="515" y="382" text-anchor="middle" class="h">Accreditation service</text>
+  <text x="515" y="407" text-anchor="middle" class="small">Mock NIN + camera presence state</text>
+  <rect x="685" y="350" width="250" height="82" rx="12" class="secure"/>
+  <text x="810" y="382" text-anchor="middle" class="h">Voting service</text>
+  <text x="810" y="407" text-anchor="middle" class="small">Event, validity and duplicate checks</text>
+  <rect x="980" y="350" width="310" height="82" rx="12" class="secure"/>
+  <text x="1135" y="382" text-anchor="middle" class="h">Proof adapter</text>
+  <text x="1135" y="407" text-anchor="middle" class="small">Generate, verify, hash and retain proof</text>
+  <rect x="260" y="462" width="330" height="58" rx="10" class="box"/>
+  <text x="425" y="488" text-anchor="middle" class="h">Public verification service</text>
+  <text x="425" y="510" text-anchor="middle" class="small">Receipt lookup and server-mediated verify</text>
+  <rect x="760" y="462" width="330" height="58" rx="10" class="box"/>
+  <text x="925" y="488" text-anchor="middle" class="h">Event-aware tally service</text>
+  <text x="925" y="510" text-anchor="middle" class="small">Aggregate Yes/No counts only</text>
+
+  <rect x="55" y="590" width="1330" height="225" rx="18" class="band"/>
+  <text x="80" y="626" class="h">Data and proof layer</text>
+  <rect x="100" y="660" width="310" height="105" rx="12" class="store"/>
+  <text x="255" y="693" text-anchor="middle" class="h">Mock NIN registry</text>
+  <text x="255" y="720" text-anchor="middle" class="small">Controlled prototype identities</text>
+  <text x="255" y="743" text-anchor="middle" class="small">No live NIMC connection</text>
+  <rect x="565" y="660" width="310" height="105" rx="12" class="store"/>
+  <text x="720" y="693" text-anchor="middle" class="h">SQLite database</text>
+  <text x="720" y="720" text-anchor="middle" class="small">Mock voters, sessions and ballots</text>
+  <text x="720" y="743" text-anchor="middle" class="small">Encrypted vote and proof metadata</text>
+  <rect x="1030" y="660" width="310" height="105" rx="12" class="store"/>
+  <text x="1185" y="693" text-anchor="middle" class="h">Winterfell proof engine</text>
+  <text x="1185" y="720" text-anchor="middle" class="small">Rust zk-STARK generation and verify</text>
+  <text x="1185" y="743" text-anchor="middle" class="small">Private proof artifacts on backend</text>
+
+  <path d="M1165 222 L1165 340" class="arrow"/><path d="M1000 195 L945 195 L945 350" class="arrow"/>
+  <path d="M345 391 L380 391" class="arrow"/><path d="M640 391 L675 391" class="arrow"/><path d="M935 391 L970 391" class="arrow"/>
+  <path d="M515 432 L310 650" class="arrow"/><path d="M810 432 L720 650" class="arrow"/><path d="M1135 432 L1185 650" class="arrow"/>
+  <path d="M1135 432 L590 491" class="dash"/><path d="M720 650 L465 520" class="arrow"/><path d="M720 650 L925 520" class="arrow"/>
+  <text x="720" y="855" text-anchor="middle" class="small">Public output is limited to privacy-preserving receipt metadata and aggregate tally values.</text>
+</svg>

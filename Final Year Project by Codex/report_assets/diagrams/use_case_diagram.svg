@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <style>
+      .title{font:700 34px Arial;fill:#102a56}.boundary{fill:#f7faff;stroke:#173a6b;stroke-width:3}
+      .use{fill:#fff;stroke:#173a6b;stroke-width:2}.admin{fill:#fff5da;stroke:#c58b14;stroke-width:2}.public{fill:#e8f8f2;stroke:#0c8a67;stroke-width:2}
+      .h{font:700 18px Arial;fill:#102a56}.t{font:15px Arial;fill:#51647f}.line{stroke:#405b7b;stroke-width:2;fill:none}
+      .actor{stroke:#102a56;stroke-width:4;fill:none}.actorText{font:700 18px Arial;fill:#102a56}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#fff"/>
+  <text x="720" y="52" text-anchor="middle" class="title">DiasporaVote Use Case Diagram</text>
+  <rect x="300" y="90" width="840" height="735" rx="24" class="boundary"/>
+  <text x="720" y="124" text-anchor="middle" class="h">DiasporaVote Secure Binary Referendum Portal</text>
+
+  <circle cx="115" cy="250" r="28" class="actor"/><path d="M115 278 L115 360 M65 315 L165 315 M115 360 L70 430 M115 360 L160 430" class="actor"/>
+  <text x="115" y="468" text-anchor="middle" class="actorText">Mock voter</text>
+  <circle cx="1320" cy="235" r="28" class="actor"/><path d="M1320 263 L1320 345 M1270 300 L1370 300 M1320 345 L1275 415 M1320 345 L1365 415" class="actor"/>
+  <text x="1320" y="453" text-anchor="middle" class="actorText">Public observer</text>
+  <circle cx="1320" cy="590" r="28" class="actor"/><path d="M1320 618 L1320 700 M1270 655 L1370 655 M1320 700 L1275 770 M1320 700 L1365 770" class="actor"/>
+  <text x="1320" y="808" text-anchor="middle" class="actorText">Prototype admin</text>
+
+  <ellipse cx="510" cy="190" rx="150" ry="38" class="use"/><text x="510" y="196" text-anchor="middle" class="h">Accredit with mock NIN</text>
+  <ellipse cx="510" cy="290" rx="150" ry="38" class="use"/><text x="510" y="286" text-anchor="middle" class="h">Complete camera-based</text><text x="510" y="307" text-anchor="middle" class="h">prototype verification</text>
+  <ellipse cx="510" cy="400" rx="150" ry="38" class="use"/><text x="510" y="406" text-anchor="middle" class="h">Select active referendum</text>
+  <ellipse cx="510" cy="510" rx="150" ry="38" class="use"/><text x="510" y="516" text-anchor="middle" class="h">Cast and review Yes/No vote</text>
+  <ellipse cx="510" cy="620" rx="150" ry="38" class="use"/><text x="510" y="616" text-anchor="middle" class="h">Receive Ballot ID</text><text x="510" y="637" text-anchor="middle" class="h">and Proof Hash</text>
+
+  <ellipse cx="920" cy="220" rx="150" ry="38" class="public"/><text x="920" y="226" text-anchor="middle" class="h">View public verification board</text>
+  <ellipse cx="920" cy="330" rx="150" ry="38" class="public"/><text x="920" y="326" text-anchor="middle" class="h">Request server-mediated</text><text x="920" y="347" text-anchor="middle" class="h">proof verification</text>
+  <ellipse cx="920" cy="440" rx="150" ry="38" class="public"/><text x="920" y="446" text-anchor="middle" class="h">View aggregate tally</text>
+  <ellipse cx="920" cy="585" rx="150" ry="38" class="admin"/><text x="920" y="591" text-anchor="middle" class="h">Create and manage mock voters</text>
+  <ellipse cx="920" cy="690" rx="150" ry="38" class="admin"/><text x="920" y="686" text-anchor="middle" class="h">Reset voter, event,</text><text x="920" y="707" text-anchor="middle" class="h">or demo state</text>
+
+  <path d="M165 315 L360 190 M165 315 L360 290 M165 315 L360 400 M165 315 L360 510 M165 315 L360 620" class="line"/>
+  <path d="M1290 300 L1070 220 M1290 300 L1070 330 M1290 300 L1070 440" class="line"/>
+  <path d="M1270 655 L1070 585 M1270 655 L1070 690" class="line"/>
+  <path d="M660 620 L770 330" class="line"/>
+  <text x="720" y="860" text-anchor="middle" class="t">The prototype administrator cannot view raw vote choices through the admin console.</text>
+</svg>

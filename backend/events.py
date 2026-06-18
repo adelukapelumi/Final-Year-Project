@@ -4,6 +4,12 @@ import hashlib
 from copy import deepcopy
 from datetime import datetime, timedelta
 
+from verifiability import (
+    BOARD_CHAIN_GENESIS_HASH,
+    build_public_ballot_record,
+    compute_chain_hash,
+)
+
 
 ACTIVE_EVENT_ID = "diaspora-referendum-2026"
 
@@ -47,21 +53,44 @@ EVENTS = (
 def _build_closed_demo_board() -> list[dict]:
     start_time = datetime(2026, 5, 31, 8, 0, 0)
     ballots: list[dict] = []
+    previous_chain_hash = BOARD_CHAIN_GENESIS_HASH
     for index in range(1, 49):
         ballot_id = f"audit-drill-{index:04d}"
         proof_hash = hashlib.sha256(
             f"secure-ballot-audit-drill:{ballot_id}".encode("utf-8")
         ).hexdigest()
+        nullifier = hashlib.sha256(
+            f"secure-ballot-audit-drill:nullifier:{ballot_id}".encode("utf-8")
+        ).hexdigest()[:32]
+        vote_commitment = hashlib.sha256(
+            f"secure-ballot-audit-drill:commitment:{ballot_id}".encode("utf-8")
+        ).hexdigest()[:32]
+        timestamp = (start_time + timedelta(minutes=index * 6)).strftime("%Y-%m-%d %H:%M:%S")
+        public_record = build_public_ballot_record(
+            ballot_id=ballot_id,
+            event_id="secure-ballot-audit-drill",
+            event_title="Secure Ballot Audit Drill",
+            nullifier=f"0x{nullifier}",
+            vote_commitment=f"0x{vote_commitment}",
+            proof_hash=proof_hash,
+            timestamp=timestamp,
+            verification_status="verified",
+        )
+        chain_hash = compute_chain_hash(previous_chain_hash, public_record)
         ballots.append(
             {
                 "ballot_id": ballot_id,
                 "event_id": "secure-ballot-audit-drill",
+                "nullifier": f"0x{nullifier}",
+                "vote_commitment": f"0x{vote_commitment}",
                 "proof_hash": proof_hash,
-                "timestamp": (start_time + timedelta(minutes=index * 6)).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
+                "timestamp": timestamp,
+                "verification_status": "verified",
+                "previous_chain_hash": previous_chain_hash,
+                "chain_hash": chain_hash,
             }
         )
+        previous_chain_hash = chain_hash
     return ballots
 
 

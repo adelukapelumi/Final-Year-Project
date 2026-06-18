@@ -1,125 +1,111 @@
 from __future__ import annotations
 
-import hashlib
-import json
-import os
-import shutil
-import subprocess
 import uuid
 from pathlib import Path
 
 from flask import current_app
+
+from proof_runtime import (
+    ProofRuntimeError,
+    ensure_binary,
+    is_executable,
+    prove_and_verify,
+    verify_only,
+    write_json,
+)
+from verifiability import build_public_inputs
 
 
 class ProofClientError(RuntimeError):
     pass
 
 
-def _is_executable(binary_path: Path) -> bool:
-    return binary_path.exists() and (os.name == "nt" or os.access(binary_path, os.X_OK))
-
-
 def proof_binary_available() -> bool:
-    return _is_executable(Path(current_app.config["PROOF_BINARY_PATH"]))
+    return is_executable(Path(current_app.config["PROOF_BINARY_PATH"]))
 
 
-def _build_binary() -> Path:
+def generate_and_verify_proof(
+    *,
+    vote_value: int,
+    registered_flag: int,
+    already_voted_flag: int,
+    voter_secret: str,
+    ballot_salt: str,
+    event_id: str,
+    nullifier: str,
+    vote_commitment: str,
+) -> dict:
     binary_path = Path(current_app.config["PROOF_BINARY_PATH"])
-    if _is_executable(binary_path):
-        return binary_path
-
-    cargo_path = shutil.which("cargo")
-    if cargo_path is None:
-        raise ProofClientError("cargo is not installed or not available on PATH")
-
     proof_dir = Path(current_app.config["PROOF_ENGINE_DIR"])
-    try:
-        result = subprocess.run(
-            [cargo_path, "build", "--release"],
-            cwd=proof_dir,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as exc:
-        raise ProofClientError("cargo is not installed or not available on PATH") from exc
-    if result.returncode != 0:
-        raise ProofClientError(result.stderr.strip() or result.stdout.strip() or "cargo build failed")
-    if not _is_executable(binary_path):
-        raise ProofClientError("proof binary not found")
-    return binary_path
-
-
-def _run_command(args: list[str]) -> str:
-    result = subprocess.run(args, check=False, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise ProofClientError(result.stderr.strip() or result.stdout.strip() or "proof command failed")
-    return result.stdout
-
-
-def _artifact_receipt_hash(proof_path: Path) -> str:
-    return hashlib.sha256(proof_path.read_bytes()).hexdigest()
-
-
-def generate_and_verify_proof(vote_value: int, registered_flag: int, already_voted_flag: int) -> dict:
-    binary_path = _build_binary()
     artifacts_dir = Path(current_app.config["PROOF_ARTIFACTS_DIR"])
     inputs_dir = Path(current_app.config["PROOF_INPUTS_DIR"])
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     inputs_dir.mkdir(parents=True, exist_ok=True)
 
     artifact_id = uuid.uuid4().hex
-    input_path = inputs_dir / f"{artifact_id}.json"
+    prove_input_path = inputs_dir / f"{artifact_id}.json"
+    verify_input_path = inputs_dir / f"verify-{artifact_id}.json"
     proof_path = artifacts_dir / f"{artifact_id}.proof.bin"
-
-    public_inputs = {
-        "vote_value": int(vote_value),
-        "registered_flag": int(registered_flag),
-        "already_voted_flag": int(already_voted_flag),
-        "accepted": 1,
-    }
-    input_path.write_text(
-        json.dumps(
-            {
-                "vote_value": public_inputs["vote_value"],
-                "registered_flag": public_inputs["registered_flag"],
-                "already_voted_flag": public_inputs["already_voted_flag"],
-            }
-        ),
-        encoding="utf-8",
+    public_inputs = build_public_inputs(
+        event_id=event_id,
+        nullifier=nullifier,
+        vote_commitment=vote_commitment,
     )
-
-    _run_command([str(binary_path), "prove", str(input_path), str(proof_path)])
-    verify_output = _run_command([str(binary_path), "verify", str(input_path), str(proof_path)])
-    if "verified=true" not in verify_output:
-        raise ProofClientError("proof verification output missing verified=true")
+    write_json(
+        prove_input_path,
+        {
+            "vote_value": int(vote_value),
+            "registered_flag": int(registered_flag),
+            "already_voted_flag": int(already_voted_flag),
+            "event_id": str(event_id),
+            "voter_secret": str(voter_secret),
+            "ballot_salt": str(ballot_salt),
+        },
+    )
+    write_json(verify_input_path, public_inputs)
+    try:
+        result = prove_and_verify(
+            binary_path=binary_path,
+            proof_dir=proof_dir,
+            prove_input_path=prove_input_path,
+            verify_input_path=verify_input_path,
+            proof_path=proof_path,
+        )
+    except ProofRuntimeError as exc:
+        raise ProofClientError(str(exc)) from exc
 
     return {
         "proof_path": str(proof_path),
-        "proof_hash": _artifact_receipt_hash(proof_path),
+        "proof_hash": str(result["proof_hash"]),
         "public_inputs": public_inputs,
+        "proof_metrics": {
+            "generation_ms": result["prove_output"].get("proof_generation_ms"),
+            "verification_ms": result["verify_output"].get("proof_verification_ms"),
+            "proof_size_bytes": result["prove_output"].get("proof_size_bytes"),
+        },
     }
 
 
 def verify_existing_proof(public_inputs: dict, proof_path: str) -> dict:
-    binary_path = _build_binary()
+    binary_path = Path(current_app.config["PROOF_BINARY_PATH"])
+    proof_dir = Path(current_app.config["PROOF_ENGINE_DIR"])
     inputs_dir = Path(current_app.config["PROOF_INPUTS_DIR"])
     inputs_dir.mkdir(parents=True, exist_ok=True)
 
     artifact_id = uuid.uuid4().hex
     input_path = inputs_dir / f"verify-{artifact_id}.json"
-    input_path.write_text(
-        json.dumps(
-            {
-                "vote_value": int(public_inputs["vote_value"]),
-                "registered_flag": int(public_inputs["registered_flag"]),
-                "already_voted_flag": int(public_inputs["already_voted_flag"]),
-            }
-        ),
-        encoding="utf-8",
-    )
-    output = _run_command([str(binary_path), "verify", str(input_path), str(proof_path)])
-    verified = "verified=true" in output
-    if not verified:
-        raise ProofClientError("proof verification failed")
-    return {"verified": True, "proof_hash": _artifact_receipt_hash(Path(proof_path))}
+    write_json(input_path, public_inputs)
+    try:
+        result = verify_only(
+            binary_path=binary_path,
+            proof_dir=proof_dir,
+            verify_input_path=input_path,
+            proof_path=Path(proof_path),
+        )
+    except ProofRuntimeError as exc:
+        raise ProofClientError(str(exc)) from exc
+    return {
+        "verified": True,
+        "proof_hash": str(result["proof_hash"]),
+        "verification_ms": result["verify_output"].get("proof_verification_ms"),
+    }

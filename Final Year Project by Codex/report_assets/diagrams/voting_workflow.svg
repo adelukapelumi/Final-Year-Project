@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#173a6b"/></marker>
+    <style>
+      .title{font:700 34px Arial;fill:#102a56}.step{fill:#fff;stroke:#173a6b;stroke-width:2}.decision{fill:#fff5da;stroke:#c58b14;stroke-width:2}
+      .ok{fill:#e8f8f2;stroke:#0c8a67;stroke-width:2}.reject{fill:#fdeceb;stroke:#bd3a3a;stroke-width:2}
+      .h{font:700 17px Arial;fill:#102a56}.t{font:14px Arial;fill:#51647f}.arrow{stroke:#173a6b;stroke-width:2.6;fill:none;marker-end:url(#arrow)}
+      .label{font:700 13px Arial;fill:#173a6b}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#fff"/>
+  <text x="720" y="52" text-anchor="middle" class="title">Voting Workflow and Activity Flow</text>
+  <ellipse cx="100" cy="115" rx="55" ry="28" class="ok"/><text x="100" y="121" text-anchor="middle" class="h">Start</text>
+  <rect x="190" y="80" width="220" height="70" rx="12" class="step"/><text x="300" y="108" text-anchor="middle" class="h">Submit mock NIN</text><text x="300" y="132" text-anchor="middle" class="t">Registry accreditation</text>
+  <polygon points="505,75 600,115 505,155 410,115" class="decision"/><text x="505" y="110" text-anchor="middle" class="h">Registered and</text><text x="505" y="130" text-anchor="middle" class="h">active?</text>
+  <rect x="670" y="80" width="230" height="70" rx="12" class="step"/><text x="785" y="108" text-anchor="middle" class="h">Camera presence check</text><text x="785" y="132" text-anchor="middle" class="t">Prototype verification</text>
+  <polygon points="1000,75 1095,115 1000,155 905,115" class="decision"/><text x="1000" y="121" text-anchor="middle" class="h">Verified?</text>
+  <rect x="1160" y="80" width="220" height="70" rx="12" class="step"/><text x="1270" y="108" text-anchor="middle" class="h">Display active event</text><text x="1270" y="132" text-anchor="middle" class="t">Diaspora referendum</text>
+
+  <rect x="1160" y="225" width="220" height="70" rx="12" class="step"/><text x="1270" y="253" text-anchor="middle" class="h">Select Yes or No</text><text x="1270" y="277" text-anchor="middle" class="t">Controlled binary ballot</text>
+  <rect x="890" y="225" width="220" height="70" rx="12" class="step"/><text x="1000" y="253" text-anchor="middle" class="h">Review selection</text><text x="1000" y="277" text-anchor="middle" class="t">Confirm before submission</text>
+  <rect x="620" y="225" width="220" height="70" rx="12" class="step"/><text x="730" y="253" text-anchor="middle" class="h">Backend validation</text><text x="730" y="277" text-anchor="middle" class="t">Session, event and value checks</text>
+  <polygon points="465,220 560,260 465,300 370,260" class="decision"/><text x="465" y="255" text-anchor="middle" class="h">Prior ballot for</text><text x="465" y="275" text-anchor="middle" class="h">this event?</text>
+  <rect x="75" y="225" width="220" height="70" rx="12" class="reject"/><text x="185" y="253" text-anchor="middle" class="h">Reject duplicate</text><text x="185" y="277" text-anchor="middle" class="t">Return controlled error</text>
+
+  <rect x="370" y="380" width="240" height="76" rx="12" class="step"/><text x="490" y="410" text-anchor="middle" class="h">Generate zk-STARK proof</text><text x="490" y="435" text-anchor="middle" class="t">Winterfell proof engine</text>
+  <rect x="690" y="380" width="240" height="76" rx="12" class="step"/><text x="810" y="410" text-anchor="middle" class="h">Verify generated proof</text><text x="810" y="435" text-anchor="middle" class="t">Before ballot storage</text>
+  <polygon points="1060,375 1160,418 1060,461 960,418" class="decision"/><text x="1060" y="424" text-anchor="middle" class="h">Proof valid?</text>
+  <rect x="1185" y="383" width="200" height="70" rx="12" class="reject"/><text x="1285" y="412" text-anchor="middle" class="h">Reject ballot</text><text x="1285" y="436" text-anchor="middle" class="t">No database insert</text>
+
+  <rect x="940" y="555" width="250" height="82" rx="12" class="ok"/><text x="1065" y="587" text-anchor="middle" class="h">Encrypt and store ballot</text><text x="1065" y="613" text-anchor="middle" class="t">Proof path private; hash retained</text>
+  <rect x="610" y="555" width="250" height="82" rx="12" class="ok"/><text x="735" y="587" text-anchor="middle" class="h">Issue public receipt</text><text x="735" y="613" text-anchor="middle" class="t">Ballot ID and Proof Hash</text>
+  <rect x="280" y="555" width="250" height="82" rx="12" class="ok"/><text x="405" y="587" text-anchor="middle" class="h">Publish safe metadata</text><text x="405" y="613" text-anchor="middle" class="t">Public board and tally update</text>
+  <ellipse cx="120" cy="596" rx="65" ry="30" class="ok"/><text x="120" y="602" text-anchor="middle" class="h">End</text>
+
+  <path d="M155 115 L180 115" class="arrow"/><path d="M410 115 L410 115" class="arrow"/><path d="M600 115 L660 115" class="arrow"/><text x="628" y="102" class="label">Yes</text>
+  <path d="M1095 115 L1150 115" class="arrow"/><text x="1120" y="102" class="label">Yes</text>
+  <path d="M1270 150 L1270 215" class="arrow"/><path d="M1160 260 L1120 260" class="arrow"/><path d="M890 260 L850 260" class="arrow"/><path d="M620 260 L570 260" class="arrow"/>
+  <path d="M370 260 L305 260" class="arrow"/><text x="325" y="247" class="label">Yes</text>
+  <path d="M465 300 L465 370" class="arrow"/><text x="478" y="340" class="label">No</text>
+  <path d="M610 418 L680 418" class="arrow"/><path d="M930 418 L950 418" class="arrow"/>
+  <path d="M1160 418 L1175 418" class="arrow"/><text x="1168" y="405" class="label">No</text>
+  <path d="M1060 461 L1060 545" class="arrow"/><text x="1073" y="505" class="label">Yes</text>
+  <path d="M940 596 L870 596" class="arrow"/><path d="M610 596 L540 596" class="arrow"/><path d="M280 596 L195 596" class="arrow"/>
+  <path d="M505 155 L505 185 L185 185 L185 215" class="arrow"/><text x="350" y="176" class="label">No: accreditation rejected</text>
+  <path d="M1000 155 L1000 185 L785 185 L785 160" class="arrow"/><text x="885" y="176" class="label">No: retry or end session</text>
+  <text x="720" y="820" text-anchor="middle" class="t">The camera step confirms prototype face presence only; it is not BVAS or certified biometric identity matching.</text>
+</svg>

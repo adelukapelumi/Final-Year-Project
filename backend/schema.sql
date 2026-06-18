@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS mock_voters (
 CREATE TABLE IF NOT EXISTS voters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nin_hash TEXT NOT NULL UNIQUE,
+    voter_secret_hash TEXT NOT NULL DEFAULT '',
     session_token_hash TEXT NOT NULL,
     token_expires_at TEXT NOT NULL,
     biometric_verified INTEGER NOT NULL DEFAULT 0,
@@ -34,10 +35,18 @@ CREATE TABLE IF NOT EXISTS ballots (
     voter_id INTEGER NOT NULL,
     event_id TEXT NOT NULL DEFAULT 'diaspora-referendum-2026',
     encrypted_vote TEXT NOT NULL,
+    nullifier TEXT NOT NULL,
+    vote_commitment TEXT NOT NULL,
+    ballot_salt TEXT NOT NULL,
     proof_hash TEXT NOT NULL,
     proof_path TEXT NOT NULL,
     public_inputs TEXT NOT NULL,
+    verification_status TEXT NOT NULL DEFAULT 'verified',
+    previous_chain_hash TEXT NOT NULL,
+    current_record_hash TEXT NOT NULL,
+    chain_hash TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (voter_id) REFERENCES voters(id) ON DELETE CASCADE,
-    UNIQUE (voter_id, event_id)
+    UNIQUE (voter_id, event_id),
+    UNIQUE (nullifier)
 );

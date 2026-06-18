@@ -76,12 +76,33 @@ export default function Receipt({ receipt }) {
           />
           <ReceiptRow
             code
+            label="Nullifier"
+            value={receipt.nullifier}
+            onCopy={() => copyValue("Nullifier", receipt.nullifier)}
+          />
+          <ReceiptRow
+            code
+            label="Vote commitment"
+            value={receipt.voteCommitment}
+            onCopy={() => copyValue("Vote commitment", receipt.voteCommitment)}
+          />
+          <ReceiptRow
+            code
             label="Proof hash"
             value={receipt.proofHash}
             onCopy={() => copyValue("Proof hash", receipt.proofHash)}
           />
+          <ReceiptRow
+            code
+            label="Chain hash"
+            value={receipt.chainHash}
+            onCopy={() => copyValue("Chain hash", receipt.chainHash)}
+          />
           <ReceiptRow label="Timestamp" value={receipt.timestamp} />
-          <ReceiptRow label="Verification status" value={receipt.verified ? "Verified" : "Unavailable"} />
+          <ReceiptRow
+            label="Verification status"
+            value={receipt.verified ? receipt.verificationStatus || "Verified" : "Unavailable"}
+          />
         </div>
 
         {copied ? <div className="copy-toast">{copied} copied</div> : null}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Icon from "../components/Icon";
-import { fetchBoard, fetchEvents, verifyBallot } from "../api";
+import { fetchBoard, fetchBoardChainVerification, fetchEvents, verifyBallot } from "../api";
 import { ACTIVE_EVENT_ID, FALLBACK_EVENTS } from "../events";
 
 function formatVerificationTimestamp(value) {
@@ -48,6 +48,7 @@ export default function PublicBoard() {
   const [events, setEvents] = useState(FALLBACK_EVENTS);
   const [selectedEventId, setSelectedEventId] = useState(ACTIVE_EVENT_ID);
   const [ballots, setBallots] = useState([]);
+  const [chainAudit, setChainAudit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -85,13 +86,18 @@ export default function PublicBoard() {
       setError("");
 
       try {
-        const result = await fetchBoard(selectedEventId);
+        const [result, chainResult] = await Promise.all([
+          fetchBoard(selectedEventId),
+          fetchBoardChainVerification(selectedEventId)
+        ]);
         if (!cancelled) {
           setBallots(result.ballots || []);
+          setChainAudit(chainResult);
         }
       } catch (requestError) {
         if (!cancelled) {
           setError(requestError.message || "Could not load the public board.");
+          setChainAudit(null);
         }
       } finally {
         if (!cancelled) {
@@ -224,11 +230,29 @@ export default function PublicBoard() {
           <span className="icon-tile"><Icon name="board" /></span>
           <p><small>Published receipts</small><strong>{loading ? "-" : ballots.length}</strong></p>
         </div>
+        <div>
+          <span className="icon-tile"><Icon name="shield" /></span>
+          <p>
+            <small>Hash-chain audit</small>
+            <strong>{chainAudit?.verified ? "Verified" : loading ? "-" : "Check required"}</strong>
+          </p>
+        </div>
         <div className="board-summary__privacy">
           <Icon name="shield" size={22} />
           <p><strong>Privacy-preserving record</strong><span>Only public cryptographic metadata is displayed.</span></p>
         </div>
       </div>
+
+      {chainAudit ? (
+        <div className={`status ${chainAudit.verified ? "status--success" : "status--error"}`}>
+          <strong>
+            {chainAudit.verified
+              ? `Hash chain verified across ${chainAudit.checked_ballots} ballot record${chainAudit.checked_ballots === 1 ? "" : "s"}.`
+              : "Hash-chain verification failed."}
+          </strong>
+          <span>{chainAudit.verified ? "The public board remains internally consistent from the fixed genesis hash." : chainAudit.error}</span>
+        </div>
+      ) : null}
 
       <div className="verification-card">
         <div className="verification-card__header">
@@ -281,6 +305,14 @@ export default function PublicBoard() {
               <div>
                 <small>Proof hash</small>
                 <code>{verificationResult.proofHash}</code>
+              </div>
+              <div>
+                <small>Nullifier</small>
+                <code>{ballots.find((ballot) => ballot.ballot_id === verificationResult.ballotId)?.nullifier || "Unavailable"}</code>
+              </div>
+              <div>
+                <small>Vote commitment</small>
+                <code>{ballots.find((ballot) => ballot.ballot_id === verificationResult.ballotId)?.vote_commitment || "Unavailable"}</code>
               </div>
               <div>
                 <small>Public board hash</small>
@@ -348,7 +380,10 @@ export default function PublicBoard() {
               <div className="board-table__head">
                 <span>Ballot ID</span>
                 <span>Event</span>
+                <span>Nullifier</span>
+                <span>Vote Commitment</span>
                 <span>Proof Hash</span>
+                <span>Chain Hash</span>
                 <span>Timestamp</span>
                 <span>Verification result</span>
               </div>
@@ -356,7 +391,10 @@ export default function PublicBoard() {
                 <div className="board-table__row" key={ballot.ballot_id}>
                   <div data-label="Ballot ID"><code>{ballot.ballot_id}</code></div>
                   <div data-label="Event"><span>{ballot.event_title}</span></div>
+                  <div data-label="Nullifier"><code>{ballot.nullifier}</code></div>
+                  <div data-label="Vote Commitment"><code>{ballot.vote_commitment}</code></div>
                   <div data-label="Proof Hash"><code>{ballot.proof_hash}</code></div>
+                  <div data-label="Chain Hash"><code>{ballot.chain_hash}</code></div>
                   <div data-label="Timestamp"><span>{ballot.timestamp}</span></div>
                   <div data-label="Verification result" className="board-table__actions">
                     <button

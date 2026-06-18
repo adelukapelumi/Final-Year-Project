@@ -106,6 +106,11 @@ export function fetchBoard(eventId) {
   return request(`/board${query}`, { method: "GET" });
 }
 
+export function fetchBoardChainVerification(eventId) {
+  const query = eventId ? `?event_id=${encodeURIComponent(eventId)}` : "";
+  return request(`/board/verify-chain${query}`, { method: "GET" });
+}
+
 export function fetchTally(eventId) {
   const query = eventId ? `?event_id=${encodeURIComponent(eventId)}` : "";
   return request(`/tally${query}`, { method: "GET" });

@@ -1,0 +1,96 @@
+You can get 100% in your writeup if you do it well. Historically, students get the most from
+their writeup and their supervisors.
+These are some errors I have seen from some presenters and some suggestions for your report.
+Common errors in FYP Report
+
+    1. TOC. The preliminary pages part of the TOC is 1.15 line spacing, the other part 1.5 line
+         spacing. Check your margins for each level.
+
+    2. Your dedication should not be more than 3 lines.
+    3. Your acknowledgement should not be more than two paragraphs
+    4. Your abstract is 1 line spacing, one paragraph and you should have keywords beneath
+
+         it.
+    5. Properly format your List of figures and tables. The page numbers should be at the
+
+         edge, not centralised.
+    6. A paragraph should be at least three sentences, not less, can be more. Merge paragraphs
+
+         that are below three sentences. A paragraph in chapter 1&2 is expected to have a
+         reference or more.
+    7. Use a reference manager!!! If your references are randomly checked and there is any
+         not on a generated field, you'll lose the marks for referencing.
+    8. Your referencing style is APA 6.
+    9. Set your paragraphs well, you do not need to put an extra line manually between
+         paragraphs.
+    10. Before you start any form of listing, there must be a small preamble to tell the reader
+         what the list is about.
+    11. You should not put a sub header under another header without writing anything under
+         the first head. (Same as the guide for listing).
+    12. All your figures and tables must be cited before they appear in your text. You must have
+         spoken of a figure or table before you drop it.
+    13. Stating your figures as `Figure 1.2 and 1.3' is not allowed, correct version, `Figure 1.2
+         and Figure 1.3'.
+    14. Endeavour to start all long tables on a new page. Especially when based on the flow it
+         should start below half the page.
+    15. For your methodology section in chapter 1, use a table, don't drop stories.
+    16. For your significance, use a list.
+    17. For your limitations should be in chapter 5. It should/must be there.
+18. Your project outline in Chapter 1 should to be written as a paragraph not a section of
+    small broken paragraphs.
+
+19. Every chapter must start on a new page.
+20. For your certification page, supervisor's first name then last name.
+21. Your list of references at the back should be indented.
+22. Your list of references at the back should be 1 line spacing with a space between each
+
+    reference
+23. A good literature review is made up of recent and relevant references.
+24. For your numbering be consistent. if i. or i) or i). Whichever you use, be consistent
+
+    throughout the work. Do not use capital roman numerals like I. or I) or I).
+25. Your section caption must be consistent, also. If you have a full stop after the numbering
+
+    (1.2.1.), do the same all through.
+26. The caption for your table should be left-aligned, and the caption for your figure,
+
+    centralised. Table at the Top, Figure at the Bottom.
+27. The content of your tables should use 1.5 line spacing.
+28. Your chapters 3 and 4 should be arranged in the order of your objective... so the flow is
+
+    seen when reading. [No need to say Objective 1 or Objective 2, just write to flow
+    according to the objectives. Check the samples]
+29. The first time an abbreviation appears, it should be written in full
+30. Make sure there is a space between your text and inline citations. `baba(error, 2025)',
+    the correct version is `baba (correct, 2025)'.
+31. The use of websites in your references should not be more than 10% of your entire
+    references. Having more waters down the credibility of your work.
+32. Do not underline your headings or lists
+33. If a section is not up to a paragraph (3 sentences), merge it with another section.
+34. Remove anything proposed in your report... Proposed system, proposed architecture,
+    Project Proposal (front page). you have done it, you are not proposing.
+35. If a major header is starting at the end of a page take it to the next page.
+36. Figure 2.1 not figure 2.1. F is always capitalised. (Same with the Table)
+37. Properly label your Tables and Figures... Be sure what is cited inline corresponds with
+    the content of the table/figure cited
+38. For your page margin. Left: 3cm. Right, Top and Bottom: 2.54cm
+39. Do not forget to change to PDF before printing
+40. No full stop before your reference. `baba.(error, 2025)'. The correct version `baba
+    (correct, 2025)'.
+
+41. Check your font size, make sure every section has the appropriate size.
+42. Do not have "naked/plain" headers, it should be formatted (2.1.3) or numbered.
+43. Your abstract is 1 line spacing, one paragraph and you should have keywords beneath
+
+    it. It should be a concise summary of the work containing the problem, aim of the study,
+    objectives paraphrased, methodology used, results, recommendation, and
+    significance/conclusion. Must not exceed 500 words and should be written in reporting
+    tense (past tense).
+44. A paragraph should be at least five sentences, not less, can be more. Merge paragraphs
+    that are below five sentences. A paragraph in chapter 1&2 is expected to have a
+    reference or more. Avoid complex and long sentences. Idea sentence is 2-3 lines
+45. Chapter 3 ­ 4 will also have references. In Chapter 3, when talking about theoretical
+    concepts that guided your decision making, you'll cite the authors of those concepts. In
+    your chapter 4, when discussion your findings or interpreting them, you'll need to
+    reference articles that support your findings or are like it, depending on the context.
+

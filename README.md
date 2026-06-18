@@ -259,11 +259,13 @@ python proof_engine/winterfell/benchmarks/run_benchmarks.py
 What it does:
 
 - builds `proof_engine/winterfell` in release mode unless `--skip-build` is passed
-- runs the real Winterfell binary for `prove` and `verify`
-- benchmarks `1`, `10`, and `100` accepted ballots
-- writes the latest benchmark outputs to:
+- runs the real Winterfell binary for both synthetic `Yes` and `No` ballots
+- discards 3 warm-up runs and measures 30 runs for each ballot value
+- reports average, minimum, and maximum proof-generation time, proof-verification time, and proof size
+- writes summary-only benchmark outputs to:
   - `proof_engine/winterfell/benchmarks/results/benchmark_results.json`
   - `proof_engine/winterfell/benchmarks/results/benchmark_results.csv`
-- writes timestamped archive copies under `proof_engine/winterfell/benchmarks/results/archive/`
 
-The benchmark also stores generated proof artifacts under `proof_engine/winterfell/benchmarks/artifacts/` for local inspection while keeping them out of Git by default.
+The benchmark does not import Flask, access the voting database, cast a vote, or retain
+synthetic proof artifacts. Temporary inputs and proofs are deleted after the run, and
+the output contains no voter identity, NIN data, decrypted real vote, or proof path.

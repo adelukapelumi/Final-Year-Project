@@ -1,0 +1,46 @@
+{
+  "benchmark": "concurrent_voting_stress_test",
+  "generated_at_utc": "2026-06-18T16:26:47Z",
+  "requested_concurrency_levels": [
+    10,
+    50,
+    100,
+    200,
+    500
+  ],
+  "max_seconds": 25.0,
+  "results": [
+    {
+      "concurrency_level": 10,
+      "status": "completed",
+      "average_request_latency_ms": 1284.17472,
+      "minimum_latency_ms": 980.2744,
+      "maximum_latency_ms": 1469.3577,
+      "throughput_ballots_per_second": 5.366095,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "duplicate_rejection_correctness": true,
+      "final_tally_correctness": true
+    },
+    {
+      "concurrency_level": 50,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    },
+    {
+      "concurrency_level": 100,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    },
+    {
+      "concurrency_level": 200,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    },
+    {
+      "concurrency_level": 500,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    }
+  ]
+}

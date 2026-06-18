@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import tempfile
 import unittest
 from pathlib import Path
@@ -36,6 +37,9 @@ class VerifyTests(unittest.TestCase):
         self.assertEqual(body["event_id"], "diaspora-referendum-2026")
         self.assertTrue(body["verified"])
         self.assertEqual(body["proof_hash"], ballot["proof_hash"])
+        self.assertEqual(body["nullifier"], ballot["nullifier"])
+        self.assertEqual(body["vote_commitment"], ballot["vote_commitment"])
+        self.assertEqual(body["verification_status"], "verified")
         self.assertNotIn("vote", body)
         self.assertNotIn("encrypted_vote", body)
         self.assertNotIn("nin", body)
@@ -85,6 +89,36 @@ class VerifyTests(unittest.TestCase):
         self.assertEqual(body["event_id"], "secure-ballot-audit-drill")
         self.assertTrue(body["verified"])
         self.assertEqual(body["proof_hash"], ballot["proof_hash"])
+
+    def test_verification_bundle_exports_public_artifact_without_private_fields(self):
+        auth = accredit(self.client)
+        token = auth.get_json()["token"]
+        ballot = vote(self.client, token, "yes").get_json()
+
+        response = self.client.get(
+            f"/verify/bundle/{ballot['ballot_id']}?event_id=diaspora-referendum-2026"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(body["ballot_id"], ballot["ballot_id"])
+        self.assertEqual(body["event_id"], "diaspora-referendum-2026")
+        self.assertEqual(body["proof_hash"], ballot["proof_hash"])
+        self.assertEqual(body["nullifier"], ballot["nullifier"])
+        self.assertEqual(body["vote_commitment"], ballot["vote_commitment"])
+        self.assertEqual(body["public_inputs"]["event_id"], "diaspora-referendum-2026")
+        self.assertEqual(body["public_inputs"]["nullifier"], ballot["nullifier"])
+        self.assertEqual(body["public_inputs"]["vote_commitment"], ballot["vote_commitment"])
+        self.assertEqual(body["previous_chain_hash"], ballot["previous_chain_hash"])
+        self.assertEqual(body["chain_hash"], ballot["chain_hash"])
+        self.assertTrue(base64.b64decode(body["proof_artifact_base64"]))
+        self.assertNotIn("vote", body)
+        self.assertNotIn("encrypted_vote", body)
+        self.assertNotIn("nin", body)
+        self.assertNotIn("nin_hash", body)
+        self.assertNotIn("voter_secret", body)
+        self.assertNotIn("ballot_salt", body)
+        self.assertNotIn("proof_path", body)
 
 
 if __name__ == "__main__":

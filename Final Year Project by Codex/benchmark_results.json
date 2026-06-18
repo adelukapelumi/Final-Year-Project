@@ -1,0 +1,53 @@
+{
+  "benchmark": "Winterfell binary referendum proof engine",
+  "generated_at_utc": "2026-06-11T17:12:40Z",
+  "configuration": {
+    "measured_iterations_per_ballot": 30,
+    "warmup_runs_per_ballot": 3,
+    "warmup_runs_excluded": true,
+    "timing_source": "Winterfell engine internal high-resolution timer",
+    "cargo_version": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "database_accessed": false,
+    "proof_artifacts_retained": false
+  },
+  "results": [
+    {
+      "synthetic_ballot_case": "Yes",
+      "run_count": 30,
+      "generation_time_ms": {
+        "average": 0.814057,
+        "minimum": 0.4601,
+        "maximum": 3.9797
+      },
+      "verification_time_ms": {
+        "average": 0.519563,
+        "minimum": 0.3506,
+        "maximum": 1.3268
+      },
+      "proof_size_bytes": {
+        "average": 4523,
+        "minimum": 4523,
+        "maximum": 4523
+      }
+    },
+    {
+      "synthetic_ballot_case": "No",
+      "run_count": 30,
+      "generation_time_ms": {
+        "average": 0.718607,
+        "minimum": 0.4566,
+        "maximum": 2.47
+      },
+      "verification_time_ms": {
+        "average": 0.40105,
+        "minimum": 0.3227,
+        "maximum": 0.7621
+      },
+      "proof_size_bytes": {
+        "average": 4521,
+        "minimum": 4521,
+        "maximum": 4521
+      }
+    }
+  ]
+}

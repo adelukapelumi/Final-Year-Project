@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#173a6b"/></marker>
+    <style>
+      .title{font:700 34px Arial;fill:#102a56}.box{fill:#fff;stroke:#173a6b;stroke-width:2.5}.secure{fill:#e8f8f2;stroke:#0c8a67;stroke-width:2.5}
+      .private{fill:#fdeceb;stroke:#bd3a3a;stroke-width:2.5}.public{fill:#fff5da;stroke:#c58b14;stroke-width:2.5}
+      .h{font:700 19px Arial;fill:#102a56}.t{font:15px Arial;fill:#51647f}.arrow{stroke:#173a6b;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .dash{stroke:#6c809a;stroke-width:2.5;stroke-dasharray:8 7;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1440" height="900" fill="#fff"/>
+  <text x="720" y="52" text-anchor="middle" class="title">zk-STARK Proof Generation and Server-Mediated Verification Flow</text>
+
+  <rect x="70" y="120" width="250" height="110" rx="14" class="private"/>
+  <text x="195" y="153" text-anchor="middle" class="h">Backend-validated inputs</text>
+  <text x="195" y="181" text-anchor="middle" class="t">vote_value: 0 or 1</text><text x="195" y="204" text-anchor="middle" class="t">registered: 1; already_voted: 0</text>
+  <rect x="390" y="120" width="250" height="110" rx="14" class="box"/>
+  <text x="515" y="153" text-anchor="middle" class="h">Build execution trace</text>
+  <text x="515" y="181" text-anchor="middle" class="t">Binary and acceptance constraints</text><text x="515" y="204" text-anchor="middle" class="t">Winterfell AIR</text>
+  <rect x="710" y="120" width="250" height="110" rx="14" class="secure"/>
+  <text x="835" y="153" text-anchor="middle" class="h">Generate proof artifact</text>
+  <text x="835" y="181" text-anchor="middle" class="t">Transparent zk-STARK proof</text><text x="835" y="204" text-anchor="middle" class="t">Stored on backend</text>
+  <rect x="1030" y="120" width="330" height="110" rx="14" class="secure"/>
+  <text x="1195" y="153" text-anchor="middle" class="h">Immediate proof verification</text>
+  <text x="1195" y="181" text-anchor="middle" class="t">Ballot proceeds only when</text><text x="1195" y="204" text-anchor="middle" class="t">Winterfell returns verified = true</text>
+
+  <polygon points="1195,295 1305,350 1195,405 1085,350" class="public"/>
+  <text x="1195" y="345" text-anchor="middle" class="h">Proof valid?</text>
+  <rect x="1030" y="480" width="330" height="105" rx="14" class="secure"/>
+  <text x="1195" y="514" text-anchor="middle" class="h">Hash proof and store ballot</text>
+  <text x="1195" y="542" text-anchor="middle" class="t">Encrypted vote + private proof path</text><text x="1195" y="565" text-anchor="middle" class="t">Proof Hash linked to Ballot ID</text>
+  <rect x="680" y="480" width="270" height="105" rx="14" class="public"/>
+  <text x="815" y="514" text-anchor="middle" class="h">Publish safe receipt metadata</text>
+  <text x="815" y="542" text-anchor="middle" class="t">Ballot ID, Proof Hash, event,</text><text x="815" y="565" text-anchor="middle" class="t">timestamp and status</text>
+  <rect x="330" y="480" width="270" height="105" rx="14" class="box"/>
+  <text x="465" y="514" text-anchor="middle" class="h">User requests verification</text>
+  <text x="465" y="542" text-anchor="middle" class="t">Public board submits Ballot ID</text><text x="465" y="565" text-anchor="middle" class="t">to backend endpoint</text>
+  <rect x="70" y="480" width="200" height="105" rx="14" class="private"/>
+  <text x="170" y="514" text-anchor="middle" class="h">Reject ballot</text>
+  <text x="170" y="542" text-anchor="middle" class="t">No accepted record</text><text x="170" y="565" text-anchor="middle" class="t">is inserted</text>
+
+  <rect x="330" y="675" width="270" height="105" rx="14" class="secure"/>
+  <text x="465" y="709" text-anchor="middle" class="h">Backend reloads proof</text>
+  <text x="465" y="737" text-anchor="middle" class="t">Private artifact path and</text><text x="465" y="760" text-anchor="middle" class="t">stored proof inputs</text>
+  <rect x="680" y="675" width="270" height="105" rx="14" class="secure"/>
+  <text x="815" y="709" text-anchor="middle" class="h">Winterfell verifies again</text>
+  <text x="815" y="737" text-anchor="middle" class="t">Server-mediated verification</text><text x="815" y="760" text-anchor="middle" class="t">response returned</text>
+  <rect x="1030" y="675" width="330" height="105" rx="14" class="public"/>
+  <text x="1195" y="709" text-anchor="middle" class="h">Compare verification metadata</text>
+  <text x="1195" y="737" text-anchor="middle" class="t">Verifier Proof Hash must match</text><text x="1195" y="760" text-anchor="middle" class="t">the public board receipt hash</text>
+
+  <path d="M320 175 L380 175" class="arrow"/><path d="M640 175 L700 175" class="arrow"/><path d="M960 175 L1020 175" class="arrow"/>
+  <path d="M1195 230 L1195 285" class="arrow"/><path d="M1195 405 L1195 470" class="arrow"/>
+  <path d="M1085 350 L170 350 L170 470" class="arrow"/><text x="630" y="335" class="t">No</text><text x="1210" y="445" class="t">Yes</text>
+  <path d="M1030 532 L960 532" class="arrow"/><path d="M680 532 L610 532" class="arrow"/>
+  <path d="M465 585 L465 665" class="arrow"/><path d="M600 727 L670 727" class="arrow"/><path d="M950 727 L1020 727" class="arrow"/>
+  <path d="M1195 585 L1195 665" class="dash"/>
+  <text x="720" y="850" text-anchor="middle" class="t">Independent client-side or auditor-side proof verification remains a recommended future improvement.</text>
+</svg>

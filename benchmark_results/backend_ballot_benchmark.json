@@ -1,0 +1,39 @@
+{
+  "benchmark": "backend_ballot_benchmark",
+  "generated_at_utc": "2026-06-18T16:28:07Z",
+  "requested_scales": [
+    1000,
+    10000,
+    100000
+  ],
+  "max_seconds": 25.0,
+  "results": [
+    {
+      "scale": 1000,
+      "status": "completed",
+      "total_accepted_ballots": 1000,
+      "failed_ballots": 0,
+      "average_ballot_acceptance_time_ms": 81.117444,
+      "minimum_ballot_acceptance_time_ms": 49.7251,
+      "maximum_ballot_acceptance_time_ms": 470.6978,
+      "throughput_ballots_per_second": 12.324884,
+      "proof_generation_and_verification_time_note": "Captured inside end-to-end ballot acceptance latency.",
+      "final_tally_correctness": true,
+      "nullifier_uniqueness_correctness": true,
+      "expected_yes": 500,
+      "expected_no": 500,
+      "observed_yes": 500,
+      "observed_no": 500
+    },
+    {
+      "scale": 10000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    },
+    {
+      "scale": 100000,
+      "status": "skipped",
+      "reason": "projected runtime exceeds 25 seconds"
+    }
+  ]
+}

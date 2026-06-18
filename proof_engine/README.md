@@ -140,12 +140,16 @@ The accepted Winterfell proof path used by the Flask backend can be benchmarked 
 python proof_engine/winterfell/benchmarks/run_benchmarks.py
 ```
 
-This script uses the real Winterfell `prove` and `verify` commands, benchmarks `1`, `10`, and `100` accepted ballots, and writes:
+This script uses the real Winterfell `prove` and `verify` commands for synthetic
+`Yes` and `No` ballots. It discards 3 warm-up runs, measures 30 runs per ballot
+value, and writes:
 
 - JSON: `proof_engine/winterfell/benchmarks/results/benchmark_results.json`
 - CSV: `proof_engine/winterfell/benchmarks/results/benchmark_results.csv`
 
-Each run also writes timestamped archive copies under `proof_engine/winterfell/benchmarks/results/archive/` and stores the generated proof artifacts under `proof_engine/winterfell/benchmarks/artifacts/`.
+Only aggregate timing and proof-size summaries are retained. The script does not
+access the Flask database or voting workflow, and all temporary input and proof
+files are deleted when the benchmark finishes.
 
 ## Issue report
 
